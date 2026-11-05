@@ -1,0 +1,6 @@
+import type { Promotion } from '@/types/admin';
+export const offers: Promotion[] = [
+    { id: 'offer-india', name: 'Weekend Escapes', title: 'Weekend Escapes', subtitle: 'Discover a change of scenery', category: 'WEEKEND INDIA', image: '/public/images/holidays/agra.webp'.replace('/public', ''), href: '/holidays', cta: 'Explore India', active: true, priority: 1, startDate: '', endDate: '', displayDuration: 7, order: 1, isDemo: true, status: 'ACTIVE', destination: 'India' },
+    { id: 'offer-dubai', name: 'Dubai Getaway', title: 'Dubai Getaway', subtitle: 'City sights and desert journeys', category: 'INTERNATIONAL', image: '/images/international/dubai.webp', href: '/holidays', cta: 'Discover the destination', active: true, priority: 1, startDate: '', endDate: '', displayDuration: 7, order: 2, isDemo: true, status: 'ACTIVE', destination: 'Dubai' },
+    { id: 'offer-cab', name: 'Travel by Cab', title: 'Travel by Cab', subtitle: 'Make the journey your own', category: 'ROAD TRIP', image: '/images/vehicles/suv.webp', href: '/cabs', cta: 'Plan your road journey', active: true, priority: 1, startDate: '', endDate: '', displayDuration: 7, order: 3, isDemo: true, status: 'ACTIVE', destination: 'India' },
+];

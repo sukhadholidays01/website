@@ -1,0 +1,115 @@
+{
+  "reports": [
+    {
+      "width": 1440,
+      "pageWidth": 1425,
+      "search": {
+        "height": 52,
+        "width": 138,
+        "font": "16px",
+        "iconWidth": 20,
+        "iconHeight": 20,
+        "stroke": "2"
+      },
+      "route": {
+        "left": 653.5,
+        "right": 1284.5,
+        "height": 210
+      },
+      "offers": 3,
+      "broken": 0,
+      "issues": []
+    },
+    {
+      "width": 360,
+      "pageWidth": 360,
+      "search": {
+        "height": 52,
+        "width": 300,
+        "font": "16px",
+        "iconWidth": 20,
+        "iconHeight": 20,
+        "stroke": "2"
+      },
+      "route": {
+        "left": 33,
+        "right": 327,
+        "height": 218
+      },
+      "offers": 1,
+      "broken": 0,
+      "issues": []
+    },
+    {
+      "width": 375,
+      "pageWidth": 375,
+      "search": {
+        "height": 52,
+        "width": 315,
+        "font": "16px",
+        "iconWidth": 20,
+        "iconHeight": 20,
+        "stroke": "2"
+      },
+      "route": {
+        "left": 33,
+        "right": 342,
+        "height": 218
+      },
+      "offers": 1,
+      "broken": 0,
+      "issues": []
+    },
+    {
+      "width": 390,
+      "pageWidth": 390,
+      "search": {
+        "height": 52,
+        "width": 330,
+        "font": "16px",
+        "iconWidth": 20,
+        "iconHeight": 20,
+        "stroke": "2"
+      },
+      "route": {
+        "left": 33,
+        "right": 357,
+        "height": 218
+      },
+      "offers": 1,
+      "broken": 0,
+      "issues": []
+    },
+    {
+      "width": 430,
+      "pageWidth": 430,
+      "search": {
+        "height": 52,
+        "width": 370,
+        "font": "16px",
+        "iconWidth": 20,
+        "iconHeight": 20,
+        "stroke": "2"
+      },
+      "route": {
+        "left": 33,
+        "right": 397,
+        "height": 218
+      },
+      "offers": 1,
+      "broken": 0,
+      "issues": []
+    }
+  ],
+  "rotation": {
+    "first": "weekend-escape",
+    "next": "dubai-getaway"
+  },
+  "dismissals": [
+    "dubai-getaway",
+    "cab-escape",
+    "weekend-escape"
+  ],
+  "afterReload": 0,
+  "errors": []
+}

@@ -1,0 +1,12 @@
+{
+  "custom": "pass",
+  "cab": {
+    "initial": "₹3,240",
+    "changed": "₹2,640",
+    "round": "₹4,680",
+    "suv": "₹6,290"
+  },
+  "navigation": "pass",
+  "reducedMotion": "pass",
+  "errors": []
+}

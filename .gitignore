@@ -32,6 +32,13 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+.env.development
+
+# Server-side local cab development data (contains customer details)
+/.cab-data/
+/.cab-test-data/
+/artifacts/cab-live/chrome-profile/
+/artifacts/cab-system/chrome-profile/
 
 # vercel
 .vercel
@@ -39,3 +46,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local browser verification profiles
+.chrome*/
+.edge*/
+
+
+# Admin browser validation profile
+/artifacts/admin-browser-profile/
+
+# Sanitized deployment source archives
+/artifacts/production-deployment/

@@ -1,0 +1,25 @@
+{
+  "checks": [
+    {
+      "service": "flights",
+      "loader": true,
+      "route": "/flights"
+    },
+    {
+      "service": "holidays",
+      "loader": true,
+      "route": "/holidays"
+    },
+    {
+      "service": "bus",
+      "loader": true,
+      "route": "/bus"
+    },
+    {
+      "service": "cabs",
+      "loader": true,
+      "route": "/cabs"
+    }
+  ],
+  "errors": []
+}

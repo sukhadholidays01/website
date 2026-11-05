@@ -1,0 +1,36 @@
+# MySQL settings belong in the ignored root .env.development file.
+# The configured application user should have access only to this database.
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_USER=<mysql-application-user>
+DB_PASSWORD=<private-mysql-password>
+DB_NAME=sukhad_holidays_website_dev
+
+# Copy optional integration settings to the ignored root .env.local file.
+# Generate CAB_ADMIN_PASSWORD / CAB_SESSION_SECRET with scripts/setup-cab-local.mjs.
+CAB_ROUTING_PROVIDER=demo
+CAB_EMAIL_MODE=preview
+CAB_ALLOW_MOCK_EMAIL_SEND=false
+
+# Explicit live routing selection (server only; leave unused until configured)
+# CAB_ROUTING_PROVIDER=mapbox
+# CAB_MAPBOX_TOKEN=<private-mapbox-token>
+# Existing MAP_BOX_ACCESS_TOKEN is also accepted server-side.
+# CAB_ROUTING_PROVIDER=osrm
+# CAB_OSRM_URL=https://your-osrm-provider.example
+# CAB_GEOCODER_URL=https://your-nominatim-compatible-provider.example
+
+# SMTP uses the main mailbox, never a separate password per alias.
+# SMTP_HOST=smtp.hostinger.com
+# SMTP_PORT=465
+# SMTP_USER=info@sukhadhholidays.in
+# SMTP_PASS=<authenticated-mailbox-password>
+# BOOKING_EMAIL=booking@sukhadhholidays.in
+# Do not enable SMTP or mock-send permission without intending real delivery.
+
+# Future payment credentials do not enable live settlement in this development adapter.
+# RAZORPAY_KEY_ID=<test-key-id>
+# RAZORPAY_KEY_SECRET=<test-key-secret>
+# RAZORPAY_WEBHOOK_SECRET=<test-webhook-secret>
+
+# Never use the explicit CAB_STORAGE_MODE=memory setting outside automated tests.

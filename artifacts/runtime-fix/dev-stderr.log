@@ -1,0 +1,209 @@
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <SegmentViewNode type="layout" pagePath="layout.tsx">
+      <SegmentTrieNode>
+      <link>
+      <script>
+      <script>
+      <script>
+      <script>
+      <script>
+      <RootLayout>
+        <html lang="en" data-scroll-behavior="smooth">
+          <body className="flex min-h...">
+            <a>
+            <TravelMotion>
+              <MotionConfig reducedMotion="user" transition={{duration:0.4, ...}}>
+                <WebsiteShell>
+                  <AuthModalProvider>
+                    <Navbar>
+                      <header className="sticky top...">
+                        <div className="mx-auto fl...">
+                          <LinkComponent>
+                          <nav>
+                          <div className="hidden ite...">
+                            <button
+                              type="button"
+                              onClick={function openLoginModal}
+                              className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-lg bg-brand-light-te..."
+-                             fdprocessedid="80d5e5"
+                            >
+                            <CountrySelector className="w-28">
+                              <div className="min-w-0 w-28">
+                                <label>
+                                <div className="relative">
+                                  <Earth>
+                                  <select
+                                    id="_R_16mlb_"
+                                    value="India"
+                                    onChange={function onChange}
+                                    className="min-h-10 w-full appearance-none rounded-lg border border-border bg-whit..."
+                                    aria-label="Country preference"
+-                                   fdprocessedid="rykrp9"
+                                  >
+                            <CurrencySelector className="w-28">
+                              <div className="min-w-0 w-28">
+                                <label>
+                                <div className="relative">
+                                  <Coins>
+                                  <select
+                                    id="_R_1mmlb_"
+                                    value="INR"
+                                    onChange={function onChange}
+                                    className="min-h-10 w-full appearance-none rounded-lg border border-border bg-whit..."
+                                    aria-label="Currency display preference"
+-                                   fdprocessedid="ycatxv"
+                                  >
+                          ...
+                    ...
+                      <CabsPage>
+                        <CabBookingFlow>
+                          ...
+                            <div className="cb-layout">
+                              <section className="cb-main-card">
+                                <form onSubmit={function onSubmit}>
+                                  <div>
+                                  <div className="cb-tabs" aria-label="Trip type">
+                                    <button
+                                      type="button"
+                                      aria-pressed={true}
+                                      className="selected"
+                                      onClick={function onClick}
+-                                     fdprocessedid="q1ot8yx"
+                                    >
+                                    <button
+                                      type="button"
+                                      aria-pressed={false}
+                                      className=""
+                                      onClick={function onClick}
+-                                     fdprocessedid="a69hjh"
+                                    >
+                                    <button
+                                      type="button"
+                                      aria-pressed={false}
+                                      className=""
+                                      onClick={function onClick}
+-                                     fdprocessedid="z4ixo"
+                                    >
+                                  <div className="cb-locatio...">
+                                    <PlacePicker label="Pickup cit..." value={{id:"ayodhya", ...}} airport={false} ...>
+                                      <div className="cb-place">
+                                        <label>
+                                          <span>
+                                          <select
+                                            value="ayodhya"
+                                            onChange={function onChange}
+-                                           fdprocessedid="joc9zq"
+                                          >
+                                        <details>
+                                          <summary>
+                                          <div className="cb-search-...">
+                                            <input
+                                              aria-label="Search pickup city / location"
+                                              value=""
+                                              maxLength={150}
+                                              onChange={function onChange}
+                                              onKeyDown={function onKeyDown}
+                                              placeholder="City, area or landmark"
+-                                             fdprocessedid="36c9rs"
+                                            >
+                                            <button
+                                              type="button"
+                                              className="cb-icon-btn"
+                                              aria-label="Find pickup city / location"
+                                              disabled={false}
+                                              onClick={function onClick}
+-                                             fdprocessedid="q9chmk"
+                                            >
+                                    <button
+                                      className="cb-swap"
+                                      type="button"
+                                      aria-label="Swap pickup and drop"
+                                      onClick={function onClick}
+-                                     fdprocessedid="m730ab"
+                                    >
+                                    <PlacePicker label="Drop city ..." value={{id:"varanasi", ...}} airport={false} ...>
+                                      <div className="cb-place">
+                                        <label>
+                                          <span>
+                                          <select
+                                            value="varanasi"
+                                            onChange={function onChange}
+-                                           fdprocessedid="n481n6"
+                                          >
+                                        <details>
+                                          <summary>
+                                          <div className="cb-search-...">
+                                            <input
+                                              aria-label="Search drop city / location"
+                                              value=""
+                                              maxLength={150}
+                                              onChange={function onChange}
+                                              onKeyDown={function onKeyDown}
+                                              placeholder="City, area or landmark"
+-                                             fdprocessedid="up6r4"
+                                            >
+                                            <button
+                                              type="button"
+                                              className="cb-icon-btn"
+                                              aria-label="Find drop city / location"
+                                              disabled={false}
+                                              onClick={function onClick}
+-                                             fdprocessedid="k3m2vr"
+                                            >
+                                  <div className="cb-fields">
+                                    <label>
+                                      <span>
+                                      <input
+                                        required={true}
+                                        minLength={5}
+                                        maxLength={400}
+                                        value=""
+                                        onChange={function onChange}
+                                        placeholder="Hotel, street address or airport terminal"
+-                                       fdprocessedid="pbhcd"
+                                      >
+                                    <label>
+                                      <span>
+                                      <input
+                                        required={true}
+                                        minLength={5}
+                                        maxLength={400}
+                                        value=""
+                                        onChange={function onChange}
+                                        placeholder="Hotel, street address or airport terminal"
+-                                       fdprocessedid="korpo2j"
+                                      >
+                                    <label>
+                                    <label>
+                                      <span>
+                                      <select
+                                        value={2}
+                                        onChange={function onChange}
+-                                       fdprocessedid="xq4f85"
+                                      >
+                                  <p>
+                                  <button
+                                    className="cb-btn cb-primary"
+                                    type="submit"
+-                                   fdprocessedid="lo67d6"
+                                  >
+                              ...
+                    ...
+                    ...
+ 
+[browser] Image with src "/brand/logo.png" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+[browser] Image with src "/images/destinations/varanasi.webp" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading

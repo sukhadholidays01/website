@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    ".chrome*/**",
+    ".edge*/**",
+    "artifacts/admin-browser-profile/**",
+    "artifacts/**/chrome-profile/**",
   ]),
 ]);
 

@@ -1,0 +1,15 @@
+import fs from 'node:fs';
+import WebSocket from 'next/dist/compiled/ws/index.js';
+const [tab]=await(await fetch('http://localhost:9224/json/list')).json();const ws=new WebSocket(tab.webSocketDebuggerUrl);await new Promise(r=>ws.on('open',r));let id=0;const p=new Map();const errors=[];ws.on('message',d=>{const m=JSON.parse(d);if(m.id){p.get(m.id)?.(m);p.delete(m.id)}if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails.exception?.description)});const send=(method,params={})=>new Promise(r=>{const n=++id;p.set(n,r);ws.send(JSON.stringify({id:n,method,params}))});const run=async expression=>(await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true})).result.result.value;const wait=ms=>new Promise(r=>setTimeout(r,ms));await send('Runtime.enable');await send('Emulation.setDeviceMetricsOverride',{width:1440,height:950,deviceScaleFactor:1,mobile:false});
+await send('Page.navigate',{url:'http://localhost:3000'});await wait(1800);
+console.log('World',await run(`(()=>{[...document.querySelectorAll('button')].find(e=>e.textContent.trim()==='World').click();return true})()`));await wait(350);console.log('World cards',await run(`JSON.stringify([...document.querySelector('#discover').querySelectorAll('h3')].map(e=>e.textContent))`));
+await run(`[...document.querySelectorAll('button')].find(e=>e.textContent==='Beach').click()`);await wait(250);console.log('Beach cards',await run(`JSON.stringify([...document.querySelectorAll('section')].find(e=>e.textContent.includes('What are you travelling for?')).querySelectorAll('h3').length)`));
+await run(`[...document.querySelectorAll('button')].find(e=>e.textContent==='SUV').click()`);await wait(200);console.log('Vehicle',await run(`document.querySelector('img[alt="SUV cab"]')?.complete`));
+await run(`document.querySelector('[aria-label="Swap origin and destination"]').click()`);console.log('Swap',await run(`JSON.stringify([document.querySelector('input[name=from]').value,document.querySelector('input[name=to]').value])`));
+const checks=[];
+for(const service of ['flights','holidays','bus','cabs']){
+ await send('Page.navigate',{url:'http://localhost:3000'});await wait(1200);await run(`document.getElementById('travel-tab-${service}').click()`);await wait(450);
+ console.log('Tab keyboard',service,await run(`document.querySelector('[role=tabpanel]').getAttribute('aria-labelledby')`));
+ await run(`document.querySelectorAll('#booking input[type=date]').forEach(e=>e.value='2026-10-12');document.querySelectorAll('#booking input[type=month]').forEach(e=>e.value='2026-10');document.querySelector('#booking form').requestSubmit()`);await wait(300);const loader=await run(`!!document.querySelector('#booking [role=status]')`);await wait(1400); for(let attempt=0;attempt<40;attempt++){if(await run(`location.pathname`) === `/${service}`)break;await wait(250)} const route=await run(`location.pathname`);checks.push({service,loader,route});
+}
+console.log('Search checks',JSON.stringify(checks));console.log('Runtime errors',JSON.stringify(errors));fs.writeFileSync('artifacts/interaction-report.json',JSON.stringify({checks,errors},null,2));ws.close();

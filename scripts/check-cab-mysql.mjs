@@ -1,0 +1,33 @@
+import assert from "node:assert/strict";
+import { randomBytes, randomUUID } from "node:crypto";
+import { databaseOptions } from "./db-environment.mjs";
+import { loadCabModule } from "./cab-test-loader.mjs";
+const options = databaseOptions();
+assert(options.database.endsWith("_dev"), "This test only writes to a database ending in _dev");
+assert.notEqual(process.env.NODE_ENV,"production");
+process.env.CAB_STORAGE_MODE="mysql";
+const { getDatabasePool }=loadCabModule("src/lib/db");
+const service=loadCabModule("src/lib/cab/service");
+const { cabPlaces }=loadCabModule("src/data/cabPlaces");
+const { readCabState }=loadCabModule("src/lib/cab/store");
+const input={ journey:{ tripType:"one-way", airportDirection:"pickup", origin:cabPlaces[0],destination:cabPlaces[1],departure:new Date(Date.now()+7*86400000).toISOString().slice(0,16),vehicle:"sedan",passengers:2,pickupAddress:"Controlled test pickup",dropAddress:"Controlled test destination" }, customer:{name:"Production Readiness Test",phone:"9000000000",email:"readiness@example.invalid",notes:"Controlled local test only"},consent:true,requestKey:randomUUID(),accessToken:randomBytes(32).toString("hex")};
+let reference;
+try {
+ const quote=await service.prepareJourney(input.journey);
+ assert.equal(quote.persistent,true); assert.equal(quote.fare.total,null);
+ console.log("PASS unconfigured route/fare stays request-only with no invented fare");
+ await assert.rejects(()=>service.createCabBooking({...input,customer:{...input.customer,phone:"bad"}}));
+ console.log("PASS invalid customer rejected");
+ const b=await service.createCabBooking(input);reference=b.id;assert.equal(b.status,"REQUESTED");assert.equal(b.development,false);
+ const duplicate=await service.createCabBooking(input);assert.equal(duplicate.id,b.id);
+ await assert.rejects(()=>service.createCabBooking({...input,customer:{...input.customer,name:"Changed Test"}}));
+ const state=await readCabState();const saved=service.getBooking(state,b.id);
+ service.authorizeBooking(saved,input.accessToken);
+ assert.throws(()=>service.authorizeBooking(saved,"wrong"));
+ assert(!("accessHash" in service.publicBooking(saved)));
+ const [rows]=await getDatabasePool().execute("SELECT booking_id FROM bookings WHERE request_key=?",[input.requestKey]);assert.equal(rows.length,1);
+ console.log("PASS creation, duplicate protection, conflicting resubmission, persistence and private lookup");
+ const cancelled=await service.customerAction(b.id,input.accessToken,"cancel");assert.equal(cancelled.status,"CANCELLED");
+ assert.equal(service.getBooking(await readCabState(),b.id).status,"CANCELLED");
+ console.log("PASS persisted cancellation; controlled cancelled test retained: " + reference);
+} finally { await getDatabasePool().end(); }

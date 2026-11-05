@@ -1,0 +1,101 @@
+[
+  {
+    "author": "Prashant Kharote",
+    "source": "https://commons.wikimedia.org/wiki/File:Guptar_ghat_sharau_river_ayodhya_utter_pradesh.jpg",
+    "destination": "ayodhya",
+    "license": "CC BY-SA 4.0",
+    "alt": "Guptar ghat sharau river ayodhya utter pradesh",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "src": "/images/holidays/ayodhya-1.webp"
+  },
+  {
+    "destination": "varanasi",
+    "src": "/images/holidays/varanasi-1.webp",
+    "alt": "Varanasi, India, Sunset in Varanasi, Sacred and mystical Ganges",
+    "author": "Vyacheslav Argenberg",
+    "license": "CC BY 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Varanasi,_India,_Sunset_in_Varanasi,_Sacred_and_mystical_Ganges.jpg",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  {
+    "destination": "varanasi",
+    "src": "/images/holidays/varanasi-2.webp",
+    "alt": "Varanasi, India, Ganges before sunset",
+    "author": "Vyacheslav Argenberg",
+    "license": "CC BY 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Varanasi,_India,_Ganges_before_sunset.jpg",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  {
+    "destination": "jaipur",
+    "src": "/images/holidays/jaipur-1.webp",
+    "alt": "Gatore chhatri in jaipur in landscape view",
+    "author": "JAGDISHSAGAR",
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Gatore_chhatri_in_jaipur_in_landscape_view.jpg",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/"
+  },
+  {
+    "destination": "goa",
+    "src": "/images/holidays/goa-1.webp",
+    "alt": "Mandrem Beach and Mandrem River, Mandrem, Goa, India (edit)",
+    "author": "Vyacheslav Argenberg; derivative: UnpetitproleX",
+    "license": "CC BY 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Mandrem_Beach_and_Mandrem_River,_Mandrem,_Goa,_India_(edit).jpg",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  {
+    "destination": "goa",
+    "src": "/images/holidays/goa-2.webp",
+    "alt": "Goa, sceneries... various images. 10",
+    "author": "Fredericknoronha",
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Goa,_sceneries..._various_images._10.jpg",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/"
+  },
+  {
+    "destination": "dubai",
+    "src": "/images/holidays/dubai-1.webp",
+    "alt": "Dubai landscape from the Burj Khalifa 4",
+    "author": "Dudva",
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Dubai_landscape_from_the_Burj_Khalifa_4.jpg",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/"
+  },
+  {
+    "destination": "dubai",
+    "src": "/images/holidays/dubai-2.webp",
+    "alt": "Dubai skyscrapers at night 2011",
+    "author": "Michaelbibin from Pixabay",
+    "license": "CC0",
+    "source": "https://commons.wikimedia.org/wiki/File:Dubai_skyscrapers_at_night_2011.jpg",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  {
+    "destination": "bali",
+    "src": "/images/holidays/bali-1.webp",
+    "alt": "Landscape, Tirta Gangga, Bali",
+    "author": "Vyacheslav Argenberg",
+    "license": "CC BY 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Landscape,_Tirta_Gangga,_Bali.jpg",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  {
+    "destination": "bali",
+    "src": "/images/holidays/bali-2.webp",
+    "alt": "Bali, Forest, Trees, East Bali, Indonesia",
+    "author": "Vyacheslav Argenberg",
+    "license": "CC BY 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Bali,_Forest,_Trees,_East_Bali,_Indonesia.jpg",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  {
+    "destination": "ayodhya",
+    "src": "/images/holidays/ayodhya-2.webp",
+    "alt": "Naya ghat, Saryu river, ayodhya",
+    "author": "Gamerzer",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "source": "https://commons.wikimedia.org/wiki/File:Naya_ghat,_Saryu_river,_ayodhya.jpg"
+  }
+]

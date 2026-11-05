@@ -1,0 +1,299 @@
+{
+  "reports": [
+    {
+      "width": 1440,
+      "stage": "search",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 1440,
+      "stage": "results",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 1440,
+      "stage": "seats",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 1440,
+      "stage": "enquiry",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 1440,
+      "stage": "success",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 1280,
+      "stage": "search",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 1280,
+      "stage": "results",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 1280,
+      "stage": "seats",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 1280,
+      "stage": "enquiry",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 1280,
+      "stage": "success",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 768,
+      "stage": "search",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 768,
+      "stage": "results",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 768,
+      "stage": "seats",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 768,
+      "stage": "enquiry",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 768,
+      "stage": "success",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 360,
+      "stage": "search",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 360,
+      "stage": "results",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 360,
+      "stage": "seats",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 360,
+      "stage": "enquiry",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 360,
+      "stage": "success",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 375,
+      "stage": "search",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 375,
+      "stage": "results",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 375,
+      "stage": "seats",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 375,
+      "stage": "enquiry",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 375,
+      "stage": "success",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 390,
+      "stage": "search",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 390,
+      "stage": "results",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 390,
+      "stage": "seats",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 390,
+      "stage": "enquiry",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 390,
+      "stage": "success",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 430,
+      "stage": "search",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 430,
+      "stage": "results",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 430,
+      "stage": "seats",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 430,
+      "stage": "enquiry",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 430,
+      "stage": "success",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 390,
+      "stage": "filters",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    },
+    {
+      "width": 390,
+      "stage": "seater-map",
+      "overflow": false,
+      "broken": [],
+      "seatTargets": 0
+    }
+  ],
+  "routes": [
+    {
+      "route": "/bus",
+      "status": 200
+    },
+    {
+      "route": "/",
+      "status": 200
+    },
+    {
+      "route": "/flights",
+      "status": 200
+    },
+    {
+      "route": "/holidays",
+      "status": 200
+    },
+    {
+      "route": "/holidays/ayodhya",
+      "status": 200
+    },
+    {
+      "route": "/holidays/ayodhya-essentials",
+      "status": 200
+    },
+    {
+      "route": "/cabs",
+      "status": 200
+    },
+    {
+      "route": "/taxi",
+      "status": 200
+    }
+  ],
+  "errors": [],
+  "interactions": "passed"
+}

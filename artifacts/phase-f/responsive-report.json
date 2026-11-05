@@ -1,0 +1,853 @@
+{
+  "reports": [
+    {
+      "route": "/",
+      "width": 360,
+      "pageWidth": 360,
+      "broken": [],
+      "overflow": [
+        {
+          "tag": "A",
+          "cls": "MarketplaceHome-module__s1Lpea__destination MarketplaceHome-module__s1Lpea__editorial1"
+        },
+        {
+          "tag": "DIV",
+          "cls": ""
+        },
+        {
+          "tag": "H3",
+          "cls": ""
+        },
+        {
+          "tag": "P",
+          "cls": ""
+        },
+        {
+          "tag": "svg",
+          "cls": {}
+        },
+        {
+          "tag": "path",
+          "cls": {}
+        },
+        {
+          "tag": "path",
+          "cls": {}
+        },
+        {
+          "tag": "A",
+          "cls": "MarketplaceHome-module__s1Lpea__destination MarketplaceHome-module__s1Lpea__editorial2"
+        }
+      ]
+    },
+    {
+      "route": "/",
+      "width": 375,
+      "pageWidth": 375,
+      "broken": [],
+      "overflow": [
+        {
+          "tag": "A",
+          "cls": "MarketplaceHome-module__s1Lpea__destination MarketplaceHome-module__s1Lpea__editorial1"
+        },
+        {
+          "tag": "DIV",
+          "cls": ""
+        },
+        {
+          "tag": "H3",
+          "cls": ""
+        },
+        {
+          "tag": "P",
+          "cls": ""
+        },
+        {
+          "tag": "svg",
+          "cls": {}
+        },
+        {
+          "tag": "path",
+          "cls": {}
+        },
+        {
+          "tag": "path",
+          "cls": {}
+        },
+        {
+          "tag": "A",
+          "cls": "MarketplaceHome-module__s1Lpea__destination MarketplaceHome-module__s1Lpea__editorial2"
+        }
+      ]
+    },
+    {
+      "route": "/",
+      "width": 390,
+      "pageWidth": 390,
+      "broken": [],
+      "overflow": [
+        {
+          "tag": "A",
+          "cls": "MarketplaceHome-module__s1Lpea__destination MarketplaceHome-module__s1Lpea__editorial1"
+        },
+        {
+          "tag": "DIV",
+          "cls": ""
+        },
+        {
+          "tag": "H3",
+          "cls": ""
+        },
+        {
+          "tag": "P",
+          "cls": ""
+        },
+        {
+          "tag": "svg",
+          "cls": {}
+        },
+        {
+          "tag": "path",
+          "cls": {}
+        },
+        {
+          "tag": "path",
+          "cls": {}
+        },
+        {
+          "tag": "A",
+          "cls": "MarketplaceHome-module__s1Lpea__destination MarketplaceHome-module__s1Lpea__editorial2"
+        }
+      ]
+    },
+    {
+      "route": "/",
+      "width": 430,
+      "pageWidth": 430,
+      "broken": [],
+      "overflow": [
+        {
+          "tag": "A",
+          "cls": "MarketplaceHome-module__s1Lpea__destination MarketplaceHome-module__s1Lpea__editorial1"
+        },
+        {
+          "tag": "DIV",
+          "cls": ""
+        },
+        {
+          "tag": "H3",
+          "cls": ""
+        },
+        {
+          "tag": "P",
+          "cls": ""
+        },
+        {
+          "tag": "svg",
+          "cls": {}
+        },
+        {
+          "tag": "path",
+          "cls": {}
+        },
+        {
+          "tag": "path",
+          "cls": {}
+        },
+        {
+          "tag": "A",
+          "cls": "MarketplaceHome-module__s1Lpea__destination MarketplaceHome-module__s1Lpea__editorial2"
+        }
+      ]
+    },
+    {
+      "route": "/",
+      "width": 768,
+      "pageWidth": 753,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/",
+      "width": 1024,
+      "pageWidth": 1009,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/",
+      "width": 1280,
+      "pageWidth": 1265,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/",
+      "width": 1440,
+      "pageWidth": 1425,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/custom-routes",
+      "width": 360,
+      "pageWidth": 360,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/custom-routes",
+      "width": 375,
+      "pageWidth": 375,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/custom-routes",
+      "width": 390,
+      "pageWidth": 390,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/custom-routes",
+      "width": 430,
+      "pageWidth": 430,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/custom-routes",
+      "width": 768,
+      "pageWidth": 753,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/custom-routes",
+      "width": 1024,
+      "pageWidth": 1009,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/custom-routes",
+      "width": 1280,
+      "pageWidth": 1265,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/custom-routes",
+      "width": 1440,
+      "pageWidth": 1425,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/flights",
+      "width": 360,
+      "pageWidth": 360,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/flights",
+      "width": 375,
+      "pageWidth": 375,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/flights",
+      "width": 390,
+      "pageWidth": 390,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/flights",
+      "width": 430,
+      "pageWidth": 430,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/flights",
+      "width": 768,
+      "pageWidth": 753,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/flights",
+      "width": 1024,
+      "pageWidth": 1009,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/flights",
+      "width": 1280,
+      "pageWidth": 1265,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/flights",
+      "width": 1440,
+      "pageWidth": 1425,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/holidays",
+      "width": 360,
+      "pageWidth": 360,
+      "broken": [],
+      "overflow": [
+        {
+          "tag": "A",
+          "cls": "holiday-destination tile-1"
+        },
+        {
+          "tag": "SMALL",
+          "cls": ""
+        },
+        {
+          "tag": "H3",
+          "cls": ""
+        },
+        {
+          "tag": "P",
+          "cls": ""
+        },
+        {
+          "tag": "path",
+          "cls": {}
+        },
+        {
+          "tag": "path",
+          "cls": {}
+        },
+        {
+          "tag": "A",
+          "cls": "holiday-destination tile-2"
+        },
+        {
+          "tag": "SMALL",
+          "cls": ""
+        }
+      ]
+    },
+    {
+      "route": "/holidays",
+      "width": 375,
+      "pageWidth": 375,
+      "broken": [],
+      "overflow": [
+        {
+          "tag": "A",
+          "cls": "holiday-destination tile-1"
+        },
+        {
+          "tag": "SMALL",
+          "cls": ""
+        },
+        {
+          "tag": "H3",
+          "cls": ""
+        },
+        {
+          "tag": "P",
+          "cls": ""
+        },
+        {
+          "tag": "path",
+          "cls": {}
+        },
+        {
+          "tag": "path",
+          "cls": {}
+        },
+        {
+          "tag": "A",
+          "cls": "holiday-destination tile-2"
+        },
+        {
+          "tag": "SMALL",
+          "cls": ""
+        }
+      ]
+    },
+    {
+      "route": "/holidays",
+      "width": 390,
+      "pageWidth": 390,
+      "broken": [],
+      "overflow": [
+        {
+          "tag": "A",
+          "cls": "holiday-destination tile-1"
+        },
+        {
+          "tag": "SMALL",
+          "cls": ""
+        },
+        {
+          "tag": "H3",
+          "cls": ""
+        },
+        {
+          "tag": "P",
+          "cls": ""
+        },
+        {
+          "tag": "path",
+          "cls": {}
+        },
+        {
+          "tag": "path",
+          "cls": {}
+        },
+        {
+          "tag": "A",
+          "cls": "holiday-destination tile-2"
+        },
+        {
+          "tag": "SMALL",
+          "cls": ""
+        }
+      ]
+    },
+    {
+      "route": "/holidays",
+      "width": 430,
+      "pageWidth": 430,
+      "broken": [],
+      "overflow": [
+        {
+          "tag": "A",
+          "cls": "holiday-destination tile-1"
+        },
+        {
+          "tag": "SMALL",
+          "cls": ""
+        },
+        {
+          "tag": "H3",
+          "cls": ""
+        },
+        {
+          "tag": "P",
+          "cls": ""
+        },
+        {
+          "tag": "path",
+          "cls": {}
+        },
+        {
+          "tag": "path",
+          "cls": {}
+        },
+        {
+          "tag": "A",
+          "cls": "holiday-destination tile-2"
+        },
+        {
+          "tag": "SMALL",
+          "cls": ""
+        }
+      ]
+    },
+    {
+      "route": "/holidays",
+      "width": 768,
+      "pageWidth": 753,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/holidays",
+      "width": 1024,
+      "pageWidth": 1009,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/holidays",
+      "width": 1280,
+      "pageWidth": 1265,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/holidays",
+      "width": 1440,
+      "pageWidth": 1425,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/holidays/ayodhya",
+      "width": 360,
+      "pageWidth": 360,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/holidays/ayodhya",
+      "width": 375,
+      "pageWidth": 375,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/holidays/ayodhya",
+      "width": 390,
+      "pageWidth": 390,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/holidays/ayodhya",
+      "width": 430,
+      "pageWidth": 430,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/holidays/ayodhya",
+      "width": 768,
+      "pageWidth": 753,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/holidays/ayodhya",
+      "width": 1024,
+      "pageWidth": 1009,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/holidays/ayodhya",
+      "width": 1280,
+      "pageWidth": 1265,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/holidays/ayodhya",
+      "width": 1440,
+      "pageWidth": 1425,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/holidays/ayodhya-essentials",
+      "width": 360,
+      "pageWidth": 360,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/holidays/ayodhya-essentials",
+      "width": 375,
+      "pageWidth": 375,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/holidays/ayodhya-essentials",
+      "width": 390,
+      "pageWidth": 390,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/holidays/ayodhya-essentials",
+      "width": 430,
+      "pageWidth": 430,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/holidays/ayodhya-essentials",
+      "width": 768,
+      "pageWidth": 753,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/holidays/ayodhya-essentials",
+      "width": 1024,
+      "pageWidth": 1009,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/holidays/ayodhya-essentials",
+      "width": 1280,
+      "pageWidth": 1265,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/holidays/ayodhya-essentials",
+      "width": 1440,
+      "pageWidth": 1425,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/bus",
+      "width": 360,
+      "pageWidth": 360,
+      "broken": [],
+      "overflow": [
+        {
+          "tag": "BUTTON",
+          "cls": ""
+        },
+        {
+          "tag": "SPAN",
+          "cls": ""
+        },
+        {
+          "tag": "svg",
+          "cls": {}
+        },
+        {
+          "tag": "path",
+          "cls": {}
+        },
+        {
+          "tag": "path",
+          "cls": {}
+        },
+        {
+          "tag": "STRONG",
+          "cls": ""
+        },
+        {
+          "tag": "SMALL",
+          "cls": ""
+        },
+        {
+          "tag": "BUTTON",
+          "cls": ""
+        }
+      ]
+    },
+    {
+      "route": "/bus",
+      "width": 375,
+      "pageWidth": 375,
+      "broken": [],
+      "overflow": [
+        {
+          "tag": "BUTTON",
+          "cls": ""
+        },
+        {
+          "tag": "SPAN",
+          "cls": ""
+        },
+        {
+          "tag": "STRONG",
+          "cls": ""
+        },
+        {
+          "tag": "SMALL",
+          "cls": ""
+        },
+        {
+          "tag": "BUTTON",
+          "cls": ""
+        },
+        {
+          "tag": "SPAN",
+          "cls": ""
+        },
+        {
+          "tag": "svg",
+          "cls": {}
+        },
+        {
+          "tag": "path",
+          "cls": {}
+        }
+      ]
+    },
+    {
+      "route": "/bus",
+      "width": 390,
+      "pageWidth": 390,
+      "broken": [],
+      "overflow": [
+        {
+          "tag": "BUTTON",
+          "cls": ""
+        },
+        {
+          "tag": "SPAN",
+          "cls": ""
+        },
+        {
+          "tag": "STRONG",
+          "cls": ""
+        },
+        {
+          "tag": "SMALL",
+          "cls": ""
+        },
+        {
+          "tag": "BUTTON",
+          "cls": ""
+        },
+        {
+          "tag": "SPAN",
+          "cls": ""
+        },
+        {
+          "tag": "svg",
+          "cls": {}
+        },
+        {
+          "tag": "path",
+          "cls": {}
+        }
+      ]
+    },
+    {
+      "route": "/bus",
+      "width": 430,
+      "pageWidth": 430,
+      "broken": [],
+      "overflow": [
+        {
+          "tag": "BUTTON",
+          "cls": ""
+        },
+        {
+          "tag": "BUTTON",
+          "cls": ""
+        },
+        {
+          "tag": "SPAN",
+          "cls": ""
+        },
+        {
+          "tag": "svg",
+          "cls": {}
+        },
+        {
+          "tag": "path",
+          "cls": {}
+        },
+        {
+          "tag": "path",
+          "cls": {}
+        },
+        {
+          "tag": "STRONG",
+          "cls": ""
+        },
+        {
+          "tag": "SMALL",
+          "cls": ""
+        }
+      ]
+    },
+    {
+      "route": "/bus",
+      "width": 768,
+      "pageWidth": 753,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/bus",
+      "width": 1024,
+      "pageWidth": 1009,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/bus",
+      "width": 1280,
+      "pageWidth": 1265,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/bus",
+      "width": 1440,
+      "pageWidth": 1425,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/cabs",
+      "width": 360,
+      "pageWidth": 360,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/cabs",
+      "width": 375,
+      "pageWidth": 375,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/cabs",
+      "width": 390,
+      "pageWidth": 390,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/cabs",
+      "width": 430,
+      "pageWidth": 430,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/cabs",
+      "width": 768,
+      "pageWidth": 753,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/cabs",
+      "width": 1024,
+      "pageWidth": 1009,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/cabs",
+      "width": 1280,
+      "pageWidth": 1265,
+      "broken": [],
+      "overflow": []
+    },
+    {
+      "route": "/cabs",
+      "width": 1440,
+      "pageWidth": 1425,
+      "broken": [],
+      "overflow": []
+    }
+  ],
+  "errors": [],
+  "redirect": {
+    "status": 308,
+    "location": "/cabs"
+  }
+}

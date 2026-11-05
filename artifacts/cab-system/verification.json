@@ -1,0 +1,149 @@
+{
+  "mode": "development-mock",
+  "checks": [
+    "Pure fare engine: manual, automatic, hybrid, round-trip daily minimums, tolls, ₹250/default override, discounts, minimum fare, billable override and hourly packages",
+    "Pure assignment checks: approved/active driver, compatible category/capacity and overlapping schedules",
+    "All seven branded email templates render with escaped customer input and development labels",
+    "Razorpay HMAC verification rejects tampered callbacks and raw webhook payloads",
+    "Mock repository is explicitly non-persistent and rolls back failed atomic mutations",
+    "Provider-independent routing: Mapbox contract, valid coordinates, no-route and timeout handling with no guessed distance",
+    "Authenticated admin APIs, origin protection, HttpOnly sessions and operation without PostgreSQL credentials",
+    "Configuration-driven customer search, labelled demo road data, dynamic vehicle fares and invalid-date/input handling",
+    "Unique private development bookings, idempotent submissions and safe email preview outbox with zero SMTP sends",
+    "Quote acceptance/re-quote protection, valid booking transitions and registered driver/vehicle conflict validation",
+    "Pending, failed, successful and refunded mock payments; duplicate callback protection; payment and booking state separation",
+    "Live Razorpay callbacks/webhooks require valid signatures and remain disabled without persistent storage",
+    "Route draft/activate/deactivate workflow, road resolution, shared admin fare preview and revision protection",
+    "Vehicle/driver create/edit, registration/phone uniqueness and invalid configuration protection",
+    "Enabled hourly package flow and unavailable routing fallback to a custom quote without a guessed distance",
+    "Round-trip and airport booking review with required customer details",
+    "Email rendering stays safe/unsent, credentials are not exposed and logout revokes server access"
+  ],
+  "browser": {
+    "workflow": "passed",
+    "responsive": [
+      {
+        "label": "journey",
+        "width": 360,
+        "scroll": 360
+      },
+      {
+        "label": "booking",
+        "width": 360,
+        "scroll": 360
+      },
+      {
+        "label": "operations",
+        "width": 360,
+        "scroll": 360
+      },
+      {
+        "label": "journey",
+        "width": 390,
+        "scroll": 390
+      },
+      {
+        "label": "booking",
+        "width": 390,
+        "scroll": 390
+      },
+      {
+        "label": "operations",
+        "width": 390,
+        "scroll": 390
+      },
+      {
+        "label": "journey",
+        "width": 768,
+        "scroll": 753
+      },
+      {
+        "label": "booking",
+        "width": 768,
+        "scroll": 753
+      },
+      {
+        "label": "operations",
+        "width": 768,
+        "scroll": 753
+      },
+      {
+        "label": "journey",
+        "width": 1440,
+        "scroll": 1425
+      },
+      {
+        "label": "booking",
+        "width": 1440,
+        "scroll": 1425
+      },
+      {
+        "label": "operations",
+        "width": 1440,
+        "scroll": 1425
+      },
+      {
+        "label": "Routes & fares",
+        "width": 1440,
+        "scroll": 1425
+      },
+      {
+        "label": "Vehicles",
+        "width": 1440,
+        "scroll": 1425
+      },
+      {
+        "label": "Drivers",
+        "width": 1440,
+        "scroll": 1425
+      },
+      {
+        "label": "Settings",
+        "width": 1440,
+        "scroll": 1425
+      },
+      {
+        "label": "Email previews",
+        "width": 1440,
+        "scroll": 1425
+      },
+      {
+        "label": "Source fare sheet",
+        "width": 1440,
+        "scroll": 1425
+      },
+      {
+        "label": "Routes & fares",
+        "width": 360,
+        "scroll": 360
+      },
+      {
+        "label": "Vehicles",
+        "width": 360,
+        "scroll": 360
+      },
+      {
+        "label": "Drivers",
+        "width": 360,
+        "scroll": 360
+      },
+      {
+        "label": "Settings",
+        "width": 360,
+        "scroll": 360
+      },
+      {
+        "label": "Email previews",
+        "width": 360,
+        "scroll": 360
+      },
+      {
+        "label": "Source fare sheet",
+        "width": 360,
+        "scroll": 360
+      }
+    ],
+    "runtimeErrors": []
+  },
+  "errors": []
+}

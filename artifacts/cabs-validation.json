@@ -1,0 +1,86 @@
+{
+  "reports": [
+    {
+      "width": 1280,
+      "scrollWidth": 1280,
+      "overflow": [],
+      "broken": [],
+      "sticky": "none",
+      "carPath": "shape(from 6% 24.5px, curve to 43% 80.5px with 27% 24.5px / 21% 80.5px, line to 94% 80.5px)"
+    },
+    {
+      "width": 768,
+      "scrollWidth": 768,
+      "overflow": [],
+      "broken": [],
+      "sticky": "flex",
+      "carPath": "shape(from 0px 44px, line to 0px 158px)"
+    },
+    {
+      "width": 360,
+      "scrollWidth": 360,
+      "overflow": [],
+      "broken": [],
+      "sticky": "flex",
+      "carPath": "shape(from 0px 44px, line to 0px 158px)"
+    },
+    {
+      "width": 375,
+      "scrollWidth": 375,
+      "overflow": [],
+      "broken": [],
+      "sticky": "flex",
+      "carPath": "shape(from 0px 44px, line to 0px 158px)"
+    },
+    {
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [],
+      "broken": [],
+      "sticky": "flex",
+      "carPath": "shape(from 0px 44px, line to 0px 158px)"
+    },
+    {
+      "width": 430,
+      "scrollWidth": 430,
+      "overflow": [],
+      "broken": [],
+      "sticky": "flex",
+      "carPath": "shape(from 0px 44px, line to 0px 158px)"
+    },
+    {
+      "keyboardFocus": "Edit journey"
+    },
+    {
+      "route": "/",
+      "status": 200,
+      "location": null
+    },
+    {
+      "route": "/flights",
+      "status": 200,
+      "location": null
+    },
+    {
+      "route": "/holidays",
+      "status": 200,
+      "location": null
+    },
+    {
+      "route": "/bus",
+      "status": 200,
+      "location": null
+    },
+    {
+      "route": "/cabs",
+      "status": 200,
+      "location": null
+    },
+    {
+      "route": "/taxi",
+      "status": 308,
+      "location": "/cabs"
+    }
+  ],
+  "errors": []
+}

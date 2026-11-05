@@ -1,0 +1,1037 @@
+.holiday-root {
+  background: #f8fafc;
+  color: #102a43;
+  padding: 32px 0 80px;
+}
+.holiday-container {
+  width: min(1240px, 100% - 64px);
+  margin: auto;
+}
+.holiday-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.17em;
+  color: #0f4c81;
+}
+.holiday-editorial {
+  display: grid;
+  grid-template-columns: 1.45fr 1fr;
+  align-items: end;
+  gap: 64px;
+  padding: 30px 0 48px;
+  border-bottom: 1px solid #e2e8f0;
+}
+.holiday-root h1 {
+  font-size: clamp(42px, 5.2vw, 76px);
+  line-height: 1.06;
+  font-weight: 600;
+  letter-spacing: -0.055em;
+  color: #0b3766;
+  margin: 22px 0;
+}
+.holiday-root h1 em {
+  font-family: Georgia, serif;
+  font-weight: 400;
+  color: #0f4c81;
+}
+.holiday-intro {
+  font-size: 17px;
+  line-height: 1.8;
+  color: #64748b;
+  max-width: 640px;
+}
+.holiday-root h2 {
+  font-size: clamp(24px, 2.8vw, 34px);
+  line-height: 1.25;
+  letter-spacing: -0.035em;
+  font-weight: 600;
+  color: #0b3766;
+}
+.holiday-search-area {
+  padding-bottom: 6px;
+}
+.holiday-switch {
+  display: flex;
+  background: #e8f8fa;
+  padding: 5px;
+  border-radius: 50px;
+  max-width: 240px;
+  margin-bottom: 20px;
+}
+.holiday-switch button {
+  position: relative;
+  width: 50%;
+  min-height: 44px;
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 50px;
+}
+.holiday-switch button > span:first-child:not(:last-child) {
+  position: absolute;
+  inset: 0;
+  background: #0b3766;
+  border-radius: 50px;
+}
+.holiday-switch button > span:last-child {
+  position: relative;
+  z-index: 1;
+}
+.holiday-switch button[aria-pressed="true"] {
+  color: white;
+}
+.holiday-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: white;
+  padding: 0 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  min-height: 56px;
+  color: #0f4c81;
+}
+.holiday-search input {
+  width: 100%;
+  min-width: 0;
+  padding: 14px 0;
+  outline: none;
+}
+.holiday-search:focus-within {
+  outline: 2px solid #12b5c4;
+  outline-offset: 2px;
+}
+.holiday-hint {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #64748b;
+  margin-top: 12px;
+}
+.holiday-section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+.holiday-section-heading h2 {
+  margin-top: 9px;
+}
+.holiday-section-heading > p {
+  color: #64748b;
+  font-size: 13px;
+  max-width: 270px;
+}
+.holiday-moods {
+  padding: 34px 0;
+}
+.holiday-mood-scroll {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 4px 3px 8px;
+  scrollbar-width: thin;
+}
+.holiday-mood-scroll > button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+  min-height: 45px;
+  padding: 9px 19px;
+  border: 1px solid #e2e8f0;
+  border-radius: 50px;
+  font-size: 13px;
+  background: white;
+  transition: background 0.2s;
+}
+.holiday-mood-scroll > button span {
+  font-size: 20px;
+  color: #0f4c81;
+}
+.holiday-mood-scroll > button[aria-pressed="true"] {
+  background: #0b3766;
+  color: white;
+  border-color: #0b3766;
+}
+.holiday-mood-scroll > button[aria-pressed="true"] span {
+  color: #12b5c4;
+}
+.holiday-destinations {
+  padding: 10px 0 48px;
+}
+.holiday-mosaic {
+  display: grid;
+  grid-template-columns: 1.2fr 0.85fr 1fr;
+  grid-auto-rows: 220px;
+  gap: 18px;
+}
+.holiday-destination {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 15px;
+  color: white;
+  transition: transform 0.25s;
+}
+.holiday-destination.tile-0 {
+  grid-row: span 2;
+}
+.holiday-destination.tile-2 {
+  grid-row: span 2;
+  margin-top: 40px;
+}
+.holiday-destination.tile-3 {
+  grid-column: 2;
+}
+.holiday-destination.tile-4 {
+  grid-column: span 2;
+}
+.holiday-destination img {
+  object-fit: cover;
+  transition: transform 0.35s;
+}
+.holiday-destination:after {
+  content: "";
+  position: absolute;
+  inset: 25% 0 0;
+  background: linear-gradient(transparent, rgba(6, 24, 42, 0.8));
+}
+.holiday-destination > div {
+  position: absolute;
+  bottom: 26px;
+  left: 24px;
+  right: 48px;
+  z-index: 1;
+}
+.holiday-destination small {
+  font-size: 10px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: #e8f8fa;
+}
+.holiday-destination h3 {
+  font-size: 29px;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  margin: 5px 0;
+}
+.holiday-destination p {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #f1f5f9;
+}
+.holiday-card-arrow {
+  position: absolute;
+  right: 20px;
+  bottom: 28px;
+  z-index: 2;
+  transition: transform 0.2s;
+}
+.holiday-destination:hover {
+  transform: translateY(-3px);
+}
+.holiday-destination:hover img {
+  transform: scale(1.03);
+}
+.holiday-destination:hover .holiday-card-arrow {
+  transform: translateX(4px);
+}
+.holiday-journeys {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 44px;
+}
+.holiday-packages {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 24px;
+  align-items: start;
+  margin-top: 24px;
+}
+.holiday-package {
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  overflow: hidden;
+  background: white;
+}
+.holiday-package-image {
+  position: relative;
+  display: block;
+  height: 210px;
+  overflow: hidden;
+}
+.holiday-package.featured .holiday-package-image {
+  height: 270px;
+}
+.holiday-package-image img {
+  transition: transform 0.3s;
+}
+.holiday-package-image:hover img {
+  transform: scale(1.03);
+}
+.holiday-package-image > span {
+  position: absolute;
+  bottom: 16px;
+  left: 18px;
+  background: white;
+  padding: 5px 12px;
+  border-radius: 30px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0b3766;
+}
+.holiday-package-body {
+  padding: 24px;
+}
+.holiday-package h3 {
+  font-size: 23px;
+  letter-spacing: -0.035em;
+  font-weight: 600;
+  color: #0b3766;
+  margin: 8px 0;
+}
+.holiday-package-body > p:not(.holiday-eyebrow) {
+  font-size: 13px;
+  color: #64748b;
+}
+.holiday-description {
+  margin-top: 12px;
+  line-height: 1.8;
+}
+.holiday-package-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  border-top: 1px solid #e2e8f0;
+  margin-top: 22px;
+  padding-top: 18px;
+}
+.holiday-package-footer strong {
+  font-size: 16px;
+  color: #0b3766;
+}
+.holiday-package-footer small,
+.holiday-enquiry-price small {
+  display: block;
+  font-size: 10px;
+  color: #64748b;
+  margin-top: 5px;
+}
+.holiday-disclaimer {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.8;
+  margin-top: 24px;
+  max-width: 780px;
+}
+.holiday-closing {
+  margin-top: 56px;
+  background: #e8f8fa;
+  border-radius: 18px;
+  padding: 40px;
+  max-width: 100%;
+}
+.holiday-closing h2 {
+  margin: 12px 0;
+}
+.holiday-closing p:not(.holiday-eyebrow) {
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.8;
+  max-width: 680px;
+  margin-bottom: 24px;
+}
+.holiday-back {
+  display: inline-block;
+  font-size: 13px;
+  color: #0f4c81;
+  padding: 8px 0;
+}
+.holiday-list-header {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 40px;
+  align-items: center;
+  margin: 30px 0 40px;
+}
+.holiday-list-fragment {
+  position: relative;
+  height: 290px;
+  border-radius: 120px 16px 16px 16px;
+  overflow: hidden;
+}
+.holiday-list-fragment img {
+  object-fit: cover;
+}
+.holiday-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 24px 0;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+}
+.holiday-filters label {
+  display: flex;
+  flex: 1;
+  min-width: 160px;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 11px;
+  color: #64748b;
+}
+.holiday-filters select {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+  background: white;
+  color: #102a43;
+  font-size: 13px;
+}
+.holiday-empty {
+  padding: 40px 20px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+}
+.holiday-empty p {
+  margin: 12px 0 20px;
+  color: #64748b;
+}
+.holiday-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+  color: #64748b;
+  padding: 8px 0 30px;
+}
+.holiday-breadcrumb a {
+  color: #0f4c81;
+}
+.holiday-detail-header h1 {
+  font-size: clamp(36px, 4.6vw, 60px);
+}
+.holiday-detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 20px 0 28px;
+}
+.holiday-detail-tags span {
+  font-size: 11px;
+  padding: 5px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 30px;
+}
+.holiday-detail-tags span:last-child {
+  background: #e8f8fa;
+}
+.holiday-gallery {
+  display: grid;
+  grid-template-columns: 1.85fr 1fr;
+  grid-template-rows: 190px 190px;
+  gap: 12px;
+}
+.holiday-gallery button {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  min-width: 0;
+  text-align: left;
+}
+.holiday-gallery button:first-child {
+  grid-row: span 2;
+}
+.holiday-gallery.single {
+  display: block;
+  max-width: 860px;
+}
+.holiday-gallery.single button {
+  display: block;
+  width: 100%;
+  height: 400px;
+}
+.holiday-gallery img {
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+.holiday-gallery button:hover img {
+  transform: scale(1.03);
+}
+.holiday-gallery button > span {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  background: rgba(11, 55, 102, 0.85);
+  color: white;
+  padding: 8px 12px;
+  font-size: 11px;
+  border-radius: 7px;
+}
+.holiday-gallery-caption {
+  font-size: 10px;
+  color: #64748b;
+  margin: 12px 0 30px;
+}
+.holiday-detail-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 350px;
+  gap: 55px;
+  align-items: start;
+}
+.holiday-quick-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 22px 0;
+  border-block: 1px solid #e2e8f0;
+}
+.holiday-quick-facts span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.holiday-quick-facts svg {
+  color: #0f4c81;
+}
+.holiday-overview {
+  padding: 38px 0;
+}
+.holiday-overview h2,
+.holiday-itinerary h2 {
+  margin: 10px 0 16px;
+}
+.holiday-overview > p:last-child {
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.9;
+}
+.holiday-itinerary {
+  padding: 28px 0;
+  border-top: 1px solid #e2e8f0;
+}
+.holiday-itinerary ol {
+  list-style: none;
+  margin-top: 30px;
+}
+.holiday-itinerary li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 24px;
+  padding: 0 0 36px 24px;
+  border-left: 1px solid #b4dce3;
+  margin-left: 6px;
+}
+.holiday-itinerary li:before {
+  content: "";
+  position: absolute;
+  left: -6px;
+  top: 4px;
+  width: 11px;
+  height: 11px;
+  background: #12b5c4;
+  border: 3px solid #e8f8fa;
+  border-radius: 100%;
+}
+.holiday-itinerary li:last-child {
+  border-left-color: transparent;
+}
+.holiday-day {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #0f4c81;
+}
+.holiday-itinerary h3 {
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #0b3766;
+  line-height: 1.3;
+}
+.holiday-itinerary li p {
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.9;
+  margin-top: 10px;
+}
+.holiday-inclusions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  border-block: 1px solid #e2e8f0;
+  padding: 30px 0;
+}
+.holiday-inclusions h2,
+.holiday-notes h2 {
+  font-size: 20px;
+}
+.holiday-inclusions ul {
+  display: grid;
+  gap: 12px;
+  margin-top: 22px;
+}
+.holiday-inclusions li {
+  display: flex;
+  align-items: start;
+  gap: 10px;
+  font-size: 13px;
+  color: #64748b;
+}
+.holiday-inclusions svg {
+  flex-shrink: 0;
+  color: #0f4c81;
+}
+.holiday-notes {
+  padding: 30px 0;
+}
+.holiday-notes ul {
+  list-style: disc;
+  padding-left: 18px;
+  margin-top: 18px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.9;
+}
+.holiday-enquiry-desktop {
+  position: sticky;
+  top: 100px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 15px;
+  padding: 26px;
+}
+.holiday-enquiry-form h2 {
+  font-size: 22px;
+  margin-top: 10px;
+}
+.holiday-enquiry-price {
+  border-block: 1px solid #e2e8f0;
+  padding: 18px 0;
+  margin: 18px 0;
+}
+.holiday-enquiry-price strong {
+  font-size: 20px;
+  color: #0b3766;
+}
+.holiday-enquiry-form > label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 16px;
+}
+.holiday-enquiry-form label > input:not([type="checkbox"]) {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin-top: 7px;
+  border: 1px solid #e2e8f0;
+  padding: 11px 12px;
+  border-radius: 7px;
+  background: #fff;
+  min-height: 44px;
+  font-size: 13px;
+}
+.holiday-travellers {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+}
+.holiday-travellers > div {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.holiday-enquiry-form .holiday-consent {
+  display: flex;
+  align-items: start;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.7;
+  margin-bottom: 20px;
+}
+.holiday-consent input {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  accent-color: #0f4c81;
+}
+.holiday-contact-link {
+  display: inline-block;
+  color: #0f4c81;
+  font-size: 11px;
+  line-height: 1.8;
+  margin-top: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.holiday-form-error {
+  color: #dc2626;
+  font-size: 12px;
+  margin-bottom: 16px;
+}
+.holiday-mobile-cta {
+  display: none;
+}
+.holiday-sheet,
+.holiday-lightbox {
+  margin: auto;
+  padding: 24px;
+  background: white;
+  color: #102a43;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  max-height: 90svh;
+  overflow-y: auto;
+}
+.holiday-sheet {
+  width: min(480px, 100% - 24px);
+}
+.holiday-sheet::backdrop,
+.holiday-lightbox::backdrop {
+  background: rgba(6, 24, 42, 0.6);
+}
+.holiday-dialog-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.holiday-dialog-top h2 {
+  font-size: 16px;
+}
+.holiday-lightbox {
+  width: min(1050px, 100% - 24px);
+}
+.holiday-lightbox-image {
+  position: relative;
+  height: 65svh;
+}
+.holiday-gallery-controls {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+.holiday-success {
+  display: grid;
+  gap: 16px;
+}
+.holiday-success svg {
+  color: #0f4c81;
+}
+.holiday-success p:not(.holiday-eyebrow) {
+  font-size: 13px;
+  line-height: 1.8;
+}
+.holiday-success .holiday-reference {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  border: 1px dashed #b4dce3;
+  background: #e8f8fa;
+  padding: 12px;
+}
+.holiday-success h2 {
+  font-size: 24px;
+}
+@media (max-width: 1000px) {
+  .holiday-detail-columns {
+    grid-template-columns: minmax(0, 1fr) 310px;
+    gap: 28px;
+  }
+  .holiday-editorial {
+    gap: 32px;
+  }
+  .holiday-mosaic {
+    grid-auto-rows: 190px;
+  }
+  .holiday-package-footer {
+    flex-wrap: wrap;
+  }
+  .holiday-enquiry-desktop {
+    padding: 20px;
+  }
+}
+@media (max-width: 700px) {
+  .holiday-root {
+    padding-top: 18px;
+    padding-bottom: 48px;
+  }
+  .holiday-container {
+    width: calc(100% - 36px);
+  }
+  .holiday-editorial {
+    display: block;
+    padding: 20px 0 28px;
+  }
+  .holiday-root h1 {
+    font-size: 43px;
+    margin: 18px 0;
+    letter-spacing: -0.05em;
+  }
+  .holiday-intro {
+    font-size: 14px;
+    line-height: 1.8;
+  }
+  .holiday-search-area {
+    margin-top: 26px;
+  }
+  .holiday-switch {
+    max-width: 210px;
+    margin-bottom: 14px;
+  }
+  .holiday-search {
+    min-height: 50px;
+  }
+  .holiday-eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+  }
+  .holiday-section-heading {
+    display: block;
+    margin-bottom: 20px;
+  }
+  .holiday-section-heading > p {
+    margin-top: 10px;
+  }
+  .holiday-moods {
+    padding: 28px 0 20px;
+  }
+  .holiday-mood-scroll {
+    margin-right: -18px;
+    padding-right: 18px;
+  }
+  .holiday-mood-scroll > button {
+    padding: 8px 15px;
+    min-height: 44px;
+  }
+  .holiday-mosaic {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 12px;
+    margin-right: -18px;
+    padding: 4px 18px 12px 0;
+    scrollbar-width: thin;
+  }
+  .holiday-destination,
+  .holiday-destination.tile-2 {
+    flex: 0 0 82%;
+    height: 335px;
+    scroll-snap-align: start;
+    margin-top: 0;
+  }
+  .holiday-destination:nth-child(even) {
+    height: 290px;
+    margin-top: 22px;
+  }
+  .holiday-destination > div {
+    left: 20px;
+    bottom: 24px;
+  }
+  .holiday-destination h3 {
+    font-size: 29px;
+  }
+  .holiday-destinations {
+    padding-bottom: 28px;
+  }
+  .holiday-journeys {
+    padding-top: 30px;
+  }
+  .holiday-packages {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .holiday-package-image {
+    height: 195px;
+  }
+  .holiday-package.featured .holiday-package-image {
+    height: 235px;
+  }
+  .holiday-package-body {
+    padding: 20px;
+  }
+  .holiday-package-footer {
+    gap: 12px;
+  }
+  .holiday-package-footer strong {
+    font-size: 15px;
+  }
+  .holiday-package-footer a {
+    font-size: 12px;
+    padding: 9px 11px;
+  }
+  .holiday-closing {
+    padding: 26px;
+    margin-top: 30px;
+  }
+  .holiday-list-header {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    align-items: stretch;
+    margin: 20px 0 28px;
+  }
+  .holiday-list-fragment {
+    height: 220px;
+    border-radius: 70px 12px 12px 12px;
+  }
+  .holiday-filters {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .holiday-filters label {
+    min-width: 0;
+  }
+  .holiday-filters select {
+    font-size: 12px;
+    padding: 11px 8px;
+    width: 100%;
+    min-width: 0;
+  }
+  .holiday-breadcrumb {
+    font-size: 10px;
+    gap: 7px;
+    padding-bottom: 22px;
+  }
+  .holiday-detail-header h1 {
+    font-size: 36px;
+  }
+  .holiday-gallery,
+  .holiday-gallery.single {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 12px;
+    margin-right: -18px;
+    padding-right: 18px;
+    max-width: none;
+  }
+  .holiday-gallery button,
+  .holiday-gallery.single button {
+    display: block;
+    flex: 0 0 93%;
+    height: 270px;
+    scroll-snap-align: start;
+  }
+  .holiday-gallery-caption {
+    line-height: 1.8;
+  }
+  .holiday-detail-columns {
+    display: block;
+  }
+  .holiday-enquiry-desktop {
+    display: none;
+  }
+  .holiday-quick-facts {
+    gap: 16px;
+  }
+  .holiday-overview {
+    padding: 30px 0;
+  }
+  .holiday-itinerary li {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding-left: 24px;
+    padding-bottom: 32px;
+  }
+  .holiday-inclusions {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .holiday-detail {
+    padding-bottom: 115px;
+  }
+  .holiday-mobile-cta {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 40;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 18px calc(12px + env(safe-area-inset-bottom));
+    background: white;
+    border-top: 1px solid #e2e8f0;
+  }
+  .holiday-mobile-cta > div {
+    min-width: 0;
+  }
+  .holiday-mobile-cta small {
+    display: block;
+    font-size: 10px;
+    color: #64748b;
+  }
+  .holiday-mobile-cta strong {
+    display: block;
+    font-size: 12px;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .holiday-mobile-cta button {
+    flex-shrink: 0;
+    font-size: 12px;
+    padding: 10px 12px;
+  }
+  .holiday-sheet {
+    margin: auto 0 0;
+    width: 100%;
+    max-width: none;
+    max-height: 88svh;
+    border-radius: 20px 20px 0 0;
+    padding: 24px 24px calc(24px + env(safe-area-inset-bottom));
+  }
+  .holiday-lightbox-image {
+    height: 55svh;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .holiday-root * {
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+  .holiday-destination:hover,
+  .holiday-destination:hover img,
+  .holiday-package-image:hover img,
+  .holiday-gallery button:hover img {
+    transform: none;
+  }
+}
+.holiday-gallery button:last-child:nth-child(2) {
+  grid-row: span 2;
+}
+.holiday-photo-credits {
+  font-size: 10px;
+  color: #64748b;
+  margin: 12px 0 26px;
+}
+.holiday-photo-credits summary {
+  cursor: pointer;
+  min-height: 30px;
+}
+.holiday-photo-credits p {
+  margin: 7px 0;
+  line-height: 1.7;
+}
+.holiday-photo-credits a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.holiday-itinerary li{border-left-color:transparent}.holiday-timeline-line{position:absolute;left:-1px;top:8px;bottom:0;width:1px;background:#b4dce3;transform-origin:top}.holiday-itinerary li:last-child .holiday-timeline-line{display:none}
+@media(prefers-reduced-motion:reduce){.holiday-timeline-line{transform:none!important}}

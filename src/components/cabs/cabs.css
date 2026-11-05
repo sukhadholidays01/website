@@ -1,0 +1,1110 @@
+﻿.cab-page {
+  background: #f8fafc;
+  color: #102a43;
+  min-height: 80vh;
+}
+.cab-shell {
+  max-width: 1240px;
+  margin: auto;
+  padding: 58px 32px 76px;
+}
+.cab-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #0f4c81;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.cab-intro h1 {
+  font-size: clamp(38px, 5vw, 64px);
+  letter-spacing: -0.055em;
+  font-weight: 600;
+  line-height: 1.1;
+  margin: 16px 0;
+  color: #0b3766;
+}
+.cab-intro h1 span {
+  color: #0f4c81;
+}
+.cab-intro > p:last-child {
+  color: #64748b;
+  font-size: 17px;
+  line-height: 1.7;
+}
+.cab-progress {
+  display: flex;
+  gap: 30px;
+  margin: 30px 0 25px;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  color: #64748b;
+}
+.cab-progress li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cab-progress li span {
+  font-size: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+}
+.cab-progress li[aria-current] {
+  color: #0b3766;
+  font-weight: 700;
+}
+.cab-progress li[aria-current] span {
+  background: #0b3766;
+  color: white;
+  border-color: #0b3766;
+}
+.cab-search-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.85fr);
+  gap: 24px;
+  align-items: stretch;
+}
+.cab-console {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 22px;
+  box-shadow: 0 14px 45px #0b376608;
+  padding: 28px;
+}
+.cab-console-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.cab-console-title > span:last-child {
+  font-size: 11px;
+  color: #64748b;
+}
+.cab-locations {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 46px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #e2e8f0;
+}
+.cab-location-field {
+  min-width: 0;
+}
+.cab-location-field label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+  color: #64748b;
+}
+.cab-location-field label svg {
+  color: #0f4c81;
+}
+.cab-location-field select {
+  width: 100%;
+  min-height: 52px;
+  border: 0;
+  border-bottom: 1px solid #e2e8f0;
+  border-radius: 0;
+  background: #fff;
+  font-size: 19px;
+  font-weight: 600;
+  color: #0b3766;
+  padding: 8px 0;
+}
+.cab-swap {
+  position: absolute;
+  left: calc(50% - 18px);
+  top: 24px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #e2e8f0;
+  border-radius: 50%;
+  background: #e8f8fa;
+  color: #0f4c81;
+}
+.cab-search-details {
+  display: grid;
+  grid-template-columns: 1.6fr 1.3fr 0.7fr;
+  gap: 16px;
+  margin-top: 24px;
+  align-items: start;
+}
+.cab-trip legend,
+.cab-input label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  margin-bottom: 9px;
+}
+.cab-trip > div {
+  display: flex;
+  gap: 4px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 4px;
+}
+.cab-trip label {
+  position: relative;
+  flex: 1;
+}
+.cab-trip input {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+}
+.cab-trip span {
+  display: grid;
+  place-items: center;
+  min-height: 40px;
+  font-size: 12px;
+  white-space: nowrap;
+  border-radius: 7px;
+}
+.cab-trip input:checked + span {
+  background: #0b3766;
+  color: #fff;
+}
+.cab-trip input:focus-visible + span {
+  outline: 3px solid #12b5c4;
+  outline-offset: 2px;
+}
+.cab-input {
+  min-width: 0;
+}
+.cab-input input {
+  width: 100%;
+  min-width: 0;
+  height: 50px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0 10px;
+  background: #fff;
+  font-size: 13px;
+}
+.cab-search-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-top: 26px;
+}
+.cab-search-bottom > span {
+  font-size: 12px;
+  color: #64748b;
+}
+.cab-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: #0b3766 !important;
+  color: #fff !important;
+  border: 1px solid #0b3766;
+  border-radius: 10px;
+  min-height: 50px;
+  padding: 12px 22px;
+  font-size: 13px;
+  font-weight: 600;
+  transition:
+    background 0.2s,
+    transform 0.2s;
+}
+.cab-button:hover {
+  background: #0f4c81 !important;
+}
+.cab-button:disabled {
+  opacity: 0.7;
+}
+.cab-secondary {
+  background: white !important;
+  color: #0b3766 !important;
+  border-color: #d5e1eb;
+}
+.cab-secondary:hover {
+  background: #e8f8fa !important;
+}
+.cab-error {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #b91c1c;
+  margin-top: 7px;
+}
+.cab-route {
+  border: 1px solid #d6e7ee;
+  border-radius: 22px;
+  padding: 24px;
+  background: #e8f8fa;
+  overflow: hidden;
+}
+.cab-route-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.cab-route-heading > span:last-child {
+  font-size: 10px;
+  color: #0f4c81;
+}
+.cab-route-stage {
+  height: 180px;
+  position: relative;
+  margin: 18px 0;
+}
+.cab-route-svg {
+  position: absolute;
+  inset: 20px 0 10px;
+  width: 100%;
+  height: 150px;
+}
+.cab-route-label {
+  position: absolute;
+  z-index: 2;
+}
+.cab-route-label small {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.13em;
+  color: #64748b;
+}
+.cab-route-label strong {
+  font-size: 16px;
+  color: #0b3766;
+}
+.cab-origin {
+  top: 0;
+  left: 6%;
+}
+.cab-destination {
+  bottom: 0;
+  right: 0;
+  text-align: right;
+}
+.cab-moving-car {
+  position: absolute;
+  top: 20px;
+  left: 0;
+  offset-path: shape(
+    from 6% 23%,
+    curve to 43% 77% with 27% 23% / 21% 77%,
+    line to 94% 77%
+  );
+  offset-rotate: 0deg;
+  width: 42px;
+  height: 36px;
+  background: #fff;
+  border: 1px solid #d6e7ee;
+  box-shadow: 0 5px 12px #0b376612;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  color: #0b3766;
+}
+.cab-route-caption {
+  text-align: center;
+  color: #0f4c81;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.cab-route-caption span {
+  display: block;
+  font-size: 11px;
+  color: #64748b;
+}
+.cab-route-vertical {
+  display: none;
+}
+.cab-popular {
+  margin-top: 46px;
+}
+.cab-popular h2 {
+  font-size: 24px;
+  letter-spacing: -0.03em;
+  color: #0b3766;
+  margin: 8px 0 20px;
+  font-weight: 600;
+}
+.cab-popular > div {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.cab-popular button {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 20px;
+  color: #0f4c81;
+}
+.cab-popular button:hover {
+  border-color: #12b5c4;
+}
+.cab-popular button span {
+  flex: 1;
+  min-width: 0;
+}
+.cab-popular strong,
+.cab-popular small {
+  display: block;
+}
+.cab-popular strong {
+  font-size: 14px;
+}
+.cab-popular small {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 4px;
+}
+.cab-result-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.cab-result-title h2 {
+  font-size: 27px;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  color: #0b3766;
+}
+.cab-result-title h2 span {
+  color: #12b5c4;
+}
+.cab-result-title > button,
+.cab-back {
+  font-size: 12px;
+  color: #0f4c81;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  min-height: 44px;
+}
+.cab-results {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr);
+  gap: 24px;
+  margin-top: 28px;
+  align-items: start;
+}
+.cab-vehicles {
+  min-width: 0;
+}
+.cab-vehicles h2 {
+  font-size: 24px;
+  letter-spacing: -0.03em;
+  font-weight: 600;
+  color: #0b3766;
+  margin: 8px 0 20px;
+}
+.cab-vehicle-tabs {
+  display: flex;
+  overflow-x: auto;
+  gap: 8px;
+  padding: 4px 3px 12px;
+  scrollbar-width: thin;
+}
+.cab-vehicle-tabs button {
+  flex: 1;
+  white-space: nowrap;
+  min-height: 48px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 15px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #fff;
+}
+.cab-vehicle-tabs button[aria-pressed="true"] {
+  background: #0b3766;
+  color: #fff;
+  border-color: #0b3766;
+}
+.cab-vehicle-presentation {
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  background: #fff;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  min-height: 350px;
+}
+.cab-vehicle-photo {
+  position: relative;
+  min-height: 320px;
+  overflow: hidden;
+}
+.cab-photo-layer {
+  position: absolute;
+  inset: 0;
+}
+.cab-photo-layer img {
+  object-position: 50% 50%;
+}
+.cab-vehicle-photo > span {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  color: #fff;
+  background: #0b3766e8;
+  padding: 6px 8px;
+  border-radius: 5px;
+  font-size: 9px;
+}
+.cab-vehicle-copy {
+  padding: 28px 22px;
+  align-self: center;
+}
+.cab-vehicle-copy h3 {
+  font-size: 30px;
+  letter-spacing: -0.04em;
+  font-weight: 600;
+  color: #0b3766;
+  margin: 10px 0;
+}
+.cab-vehicle-copy > p:not(.cab-eyebrow) {
+  font-size: 13px;
+  line-height: 1.8;
+  color: #64748b;
+}
+.cab-vehicle-copy ul {
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  margin: 22px 0;
+  display: grid;
+  gap: 12px;
+}
+.cab-vehicle-copy li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cab-vehicle-copy li svg {
+  color: #0f4c81;
+  flex-shrink: 0;
+}
+.cab-vehicle-copy .cab-button {
+  width: 100%;
+  padding: 10px;
+  font-size: 12px;
+}
+.cab-fare {
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  background: #fff;
+  padding: 26px;
+  position: sticky;
+  top: 100px;
+}
+.cab-fare h2 {
+  font-size: 23px;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  color: #0b3766;
+  margin: 8px 0 22px;
+}
+.cab-mini-route {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  color: #0b3766;
+}
+.cab-mini-route span {
+  height: 22px;
+  margin-left: 5px;
+  border-left: 1px dashed #12b5c4;
+}
+.cab-fare-details {
+  font-size: 12px;
+  line-height: 1.9;
+  color: #64748b;
+  margin: 18px 0;
+}
+.cab-fare dl {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 18px;
+  display: grid;
+  gap: 12px;
+  font-size: 12px;
+}
+.cab-fare dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.cab-fare dt {
+  color: #64748b;
+}
+.cab-fare dt small {
+  font-size: 9px;
+  margin-left: 4px;
+}
+.cab-fare dd {
+  font-weight: 600;
+  text-align: right;
+}
+.cab-fare-total {
+  border-top: 1px solid #e2e8f0;
+  margin-top: 20px;
+  padding-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  color: #0b3766;
+}
+.cab-fare-total span {
+  font-size: 12px;
+}
+.cab-fare-total strong {
+  display: block;
+  font-size: 36px;
+  letter-spacing: -0.04em;
+  font-weight: 600;
+}
+.cab-fare-total > small {
+  font-size: 10px;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+.cab-fare-note {
+  font-size: 11px;
+  line-height: 1.8;
+  color: #64748b;
+  margin: 16px 0;
+}
+.cab-fare > .cab-button {
+  width: 100%;
+  font-size: 12px;
+  padding: 12px;
+}
+.cab-unpriced {
+  font-size: 13px;
+  line-height: 1.8;
+  margin: 20px 0;
+  color: #64748b;
+}
+.cab-sticky {
+  display: none;
+}
+.cab-enquiry {
+  max-width: 730px;
+  margin: 0 auto;
+  padding: 36px;
+}
+.cab-enquiry h2,
+.cab-success h2 {
+  font-size: clamp(28px, 3vw, 39px);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+  color: #0b3766;
+  margin: 12px 0 24px;
+}
+.cab-back {
+  display: block;
+  margin-bottom: 22px;
+}
+.cab-enquiry-journey {
+  background: #e8f8fa;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0;
+  color: #0b3766;
+}
+.cab-enquiry-journey strong {
+  font-size: 18px;
+}
+.cab-enquiry-journey p {
+  font-size: 12px;
+  line-height: 1.8;
+  margin-top: 8px;
+  color: #0f4c81;
+}
+.cab-contact-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.cab-contact-fields > div:first-child {
+  grid-column: 1/-1;
+}
+.cab-enquiry form > .cab-button {
+  width: 100%;
+}
+.cab-success {
+  max-width: 680px;
+  margin: auto;
+  padding: 40px;
+  text-align: center;
+}
+.cab-success-icon {
+  display: grid;
+  place-items: center;
+  margin: 0 auto 22px;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #e8f8fa;
+  color: #0f4c81;
+}
+.cab-success > .cab-eyebrow {
+  justify-content: center;
+}
+.cab-success > p:not(.cab-eyebrow) {
+  font-size: 14px;
+  line-height: 1.8;
+  color: #64748b;
+}
+.cab-reference {
+  display: grid;
+  gap: 5px;
+  margin: 24px;
+  color: #0b3766;
+}
+.cab-reference small {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+.cab-reference strong {
+  font-size: 19px;
+  letter-spacing: 0.06em;
+}
+.cab-success-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+.cab-results + .cab-fare-note {
+  margin-top: 24px;
+}
+@media (min-width: 769px) {
+  .cab-results ~ * {
+    min-width: 0;
+  }
+  .cab-result-title + .cab-route .cab-route-stage {
+    height: 135px;
+    max-width: 700px;
+    margin: 12px auto;
+  }
+  .cab-result-title + .cab-route .cab-route-svg {
+    height: 105px;
+    top: 10px;
+  }
+  .cab-result-title + .cab-route .cab-moving-car {
+    top: 10px;
+  }
+  .cab-result-title + .cab-route .cab-route-caption {
+    display: none;
+  }
+}
+@media (max-width: 1050px) {
+  .cab-search-layout {
+    grid-template-columns: 1.5fr 1fr;
+    gap: 16px;
+  }
+  .cab-console {
+    padding: 22px;
+  }
+  .cab-search-details {
+    grid-template-columns: 1fr 1fr;
+  }
+  .cab-search-details > .cab-input:last-child {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .cab-trip {
+    grid-column: 1/-1;
+    grid-row: 2;
+  }
+  .cab-vehicle-presentation {
+    grid-template-columns: 1fr;
+  }
+  .cab-vehicle-photo {
+    min-height: 250px;
+  }
+  .cab-vehicle-copy {
+    padding: 24px;
+  }
+  .cab-vehicle-copy ul {
+    margin: 16px 0;
+  }
+  .cab-vehicle-tabs button {
+    flex: none;
+  }
+  .cab-vehicle-copy h3 {
+    font-size: 27px;
+  }
+}
+@media (max-width: 768px) {
+  .cab-shell {
+    padding: 32px 20px 110px;
+  }
+  .cab-intro h1 {
+    font-size: 44px;
+    max-width: 450px;
+  }
+  .cab-intro > p:last-child {
+    font-size: 15px;
+  }
+  .cab-progress {
+    gap: 22px;
+    margin: 24px 0;
+  }
+  .cab-search-layout {
+    grid-template-columns: 1fr;
+  }
+  .cab-search-details {
+    grid-template-columns: 1.5fr 1fr 0.65fr;
+  }
+  .cab-trip {
+    grid-column: auto;
+    grid-row: auto;
+  }
+  .cab-search-details > .cab-input:last-child {
+    grid-column: auto;
+    grid-row: auto;
+  }
+  .cab-search-visual .cab-route {
+    margin-top: 4px;
+  }
+  .cab-results {
+    grid-template-columns: 1fr;
+  }
+  .cab-vehicle-presentation {
+    grid-template-columns: 1fr 1fr;
+  }
+  .cab-vehicle-photo {
+    min-height: 310px;
+  }
+  .cab-fare {
+    position: static;
+  }
+  .cab-sticky {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 40;
+    padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
+    background: white;
+    border-top: 1px solid #e2e8f0;
+    box-shadow: 0 -8px 24px #0b37660a;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .cab-sticky small {
+    display: block;
+    font-size: 10px;
+    color: #64748b;
+  }
+  .cab-sticky strong {
+    display: block;
+    font-size: 24px;
+    color: #0b3766;
+    letter-spacing: -0.03em;
+  }
+  .cab-sticky .cab-button {
+    font-size: 12px;
+    padding: 10px 18px;
+  }
+  .cab-result-title h2 {
+    font-size: 22px;
+  }
+  .cab-result-title button {
+    flex-shrink: 0;
+  }
+  .cab-popular > div {
+    grid-template-columns: 1fr;
+  }
+  .cab-popular {
+    margin-top: 30px;
+  }
+  .cab-route-stage {
+    height: 200px;
+    margin: 12px 0;
+  }
+  .cab-route-svg {
+    display: none;
+  }
+  .cab-route-vertical {
+    display: block;
+    position: absolute;
+    top: 44px;
+    bottom: 42px;
+    left: 23px;
+    width: 3px;
+    background: #d6e7ee;
+  }
+  .cab-route-vertical > div {
+    height: 100%;
+    width: 100%;
+    background: #12b5c4;
+    transform-origin: top;
+  }
+  .cab-route-vertical:before,
+  .cab-route-vertical:after {
+    content: "";
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    left: -4px;
+    background: #0b3766;
+    border: 3px solid #e8f8fa;
+    border-radius: 50%;
+    z-index: 1;
+  }
+  .cab-route-vertical:before {
+    top: -4px;
+  }
+  .cab-route-vertical:after {
+    bottom: -4px;
+  }
+  .cab-origin {
+    top: 0;
+    left: 46px;
+  }
+  .cab-destination {
+    bottom: 0;
+    left: 46px;
+    right: auto;
+    text-align: left;
+  }
+  .cab-moving-car {
+    top: 0;
+    left: 24px;
+    offset-path: shape(from 0px 44px, line to 0px 158px);
+  }
+  .cab-route-caption {
+    text-align: left;
+    padding-left: 46px;
+  }
+  .cab-contact-fields {
+    grid-template-columns: 1fr;
+  }
+  .cab-contact-fields > div:first-child {
+    grid-column: auto;
+  }
+  .cab-enquiry,
+  .cab-success {
+    padding: 26px;
+  }
+  .cab-success-actions {
+    flex-direction: column;
+  }
+  .cab-success-actions .cab-button {
+    width: 100%;
+  }
+}
+@media (max-width: 540px) {
+  .cab-shell {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .cab-intro h1 {
+    font-size: 40px;
+    max-width: 330px;
+  }
+  .cab-eyebrow {
+    font-size: 10px;
+  }
+  .cab-console {
+    padding: 22px 20px;
+  }
+  .cab-console-title > span:last-child {
+    font-size: 10px;
+  }
+  .cab-locations {
+    grid-template-columns: 1fr;
+    gap: 26px;
+  }
+  .cab-location-field select {
+    font-size: 22px;
+  }
+  .cab-swap {
+    left: auto;
+    right: 8px;
+    top: 68px;
+  }
+  .cab-search-details {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .cab-search-details > .cab-input:last-child {
+    grid-row: auto;
+    grid-column: auto;
+  }
+  .cab-trip {
+    grid-row: auto;
+    grid-column: auto;
+  }
+  .cab-trip span {
+    font-size: 13px;
+  }
+  .cab-input input {
+    font-size: 16px;
+  }
+  .cab-search-bottom {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+  .cab-search-bottom > span {
+    text-align: center;
+    font-size: 11px;
+  }
+  .cab-search-bottom .cab-button {
+    width: 100%;
+    min-height: 52px;
+  }
+  .cab-route {
+    padding: 20px;
+  }
+  .cab-vehicle-presentation {
+    grid-template-columns: 1fr;
+  }
+  .cab-vehicle-photo {
+    min-height: 0;
+    aspect-ratio: 1.5;
+  }
+  .cab-vehicle-copy {
+    padding: 24px;
+  }
+  .cab-vehicle-copy .cab-button {
+    min-height: 50px;
+  }
+  .cab-vehicles h2 {
+    font-size: 23px;
+  }
+  .cab-fare {
+    padding: 24px;
+  }
+  .cab-result-title {
+    align-items: flex-start;
+  }
+  .cab-result-title h2 {
+    font-size: 21px;
+    max-width: 220px;
+  }
+  .cab-result-title button {
+    font-size: 11px;
+  }
+  .cab-enquiry-journey strong {
+    font-size: 16px;
+  }
+  .cab-enquiry-journey {
+    padding: 16px;
+  }
+  .cab-progress {
+    gap: 18px;
+    font-size: 11px;
+  }
+  .cab-popular h2 {
+    font-size: 23px;
+  }
+  .cab-success h2 {
+    font-size: 29px;
+  }
+  .cab-success > .cab-fare-note {
+    font-size: 11px;
+  }
+}
+/* Align the moving car with the illustrated road at each layout size. */
+@media (min-width: 769px) {
+  .cab-moving-car {
+    offset-path: shape(
+      from 6% 35px,
+      curve to 43% 115px with 27% 35px / 21% 115px,
+      line to 94% 115px
+    );
+  }
+  .cab-result-title + .cab-route .cab-route-stage {
+    height: 150px;
+  }
+  .cab-result-title + .cab-route .cab-route-svg {
+    top: 25px;
+  }
+  .cab-result-title + .cab-route .cab-moving-car {
+    top: 25px;
+    offset-path: shape(
+      from 6% 24.5px,
+      curve to 43% 80.5px with 27% 24.5px / 21% 80.5px,
+      line to 94% 80.5px
+    );
+  }
+}
+.cab-photo-layer img {
+  object-fit: contain;
+  background: #f8fafc;
+}
+.cab-road-dot {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #0b3766;
+  transform: translate(-50%, -50%);
+}
+.cab-road-start {
+  left: 5.8333%;
+  top: 55px;
+}
+.cab-road-end {
+  left: 94.1667%;
+  top: 135px;
+}
+@media (min-width: 769px) {
+  .cab-result-title + .cab-route .cab-road-start {
+    top: 49.5px;
+  }
+  .cab-result-title + .cab-route .cab-road-end {
+    top: 105.5px;
+  }
+}
+@media (max-width: 768px) {
+  .cab-road-dot {
+    display: none;
+  }
+}
+@media (min-width: 769px) {
+  .cab-moving-car {
+    translate: 0 20px;
+  }
+  .cab-result-title + .cab-route .cab-moving-car {
+    translate: 0 25px;
+  }
+}
+.cab-live-estimate{margin-top:20px}.cab-live-estimate>label{display:block;font-size:13px;font-weight:600;margin:0 0 8px}.cab-live-estimate>select{width:100%;min-height:48px;border:1px solid #dce7e8;border-radius:10px;padding:10px;background:white;margin-bottom:16px}.cab-live-estimate .cab-fare{position:static}.cab-live-estimate .cab-fare-total strong{font-variant-numeric:tabular-nums}.cab-button:disabled{opacity:.5;cursor:not-allowed}
+@media(prefers-reduced-motion:no-preference){.cab-button:hover{transform:translateY(-2px)}.cab-button:hover svg{transform:translateX(2px)}}
+.cab-search-layout{align-items:start}.cab-fare-total strong span{font-size:inherit;font-weight:inherit;display:inline}.cab-live-estimate .cab-fare-total strong{font-size:32px;line-height:1.2}.cab-live-estimate .cab-fare-total>span{display:block}

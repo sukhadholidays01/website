@@ -1,0 +1,85 @@
+{
+  "checks": [
+    "Admin authentication, HttpOnly session, rejected demo/anonymous access and cross-origin mutation",
+    "51 source-sheet draft fares; no invented rates; OSRM road distance",
+    "Explicit geocoding and signed place validation reject coordinate tampering",
+    "Server persistence, private booking access and idempotent submission",
+    "Final quote, customer acceptance, re-quote invalidation and availability confirmation",
+    "Round-trip return leg and overlapping driver/registration assignment protection",
+    "Airport pickup/drop with flight details, airport validation and customer cancellation",
+    "Passenger capacity, past pickup and impossible round-trip timing validation",
+    "Trip start/completion, independent payment status, duplicate/overpayment and refund limits",
+    "Manual priority, directional fares, automatic daily minimums, airport direction and preserved accepted prices",
+    "Duplicate active fare and concurrent rate revision protection",
+    "Routing failure produces a manual quote request, never an invented automatic fare",
+    "Persistent login throttling",
+    "Shared operations listing and server logout"
+  ],
+  "browser": {
+    "workflow": "passed",
+    "responsive": [
+      {
+        "label": "journey",
+        "width": 360,
+        "scroll": 360
+      },
+      {
+        "label": "booking",
+        "width": 360,
+        "scroll": 360
+      },
+      {
+        "label": "operations",
+        "width": 360,
+        "scroll": 360
+      },
+      {
+        "label": "journey",
+        "width": 390,
+        "scroll": 390
+      },
+      {
+        "label": "booking",
+        "width": 390,
+        "scroll": 390
+      },
+      {
+        "label": "operations",
+        "width": 390,
+        "scroll": 390
+      },
+      {
+        "label": "journey",
+        "width": 768,
+        "scroll": 753
+      },
+      {
+        "label": "booking",
+        "width": 768,
+        "scroll": 753
+      },
+      {
+        "label": "operations",
+        "width": 768,
+        "scroll": 753
+      },
+      {
+        "label": "journey",
+        "width": 1440,
+        "scroll": 1425
+      },
+      {
+        "label": "booking",
+        "width": 1440,
+        "scroll": 1425
+      },
+      {
+        "label": "operations",
+        "width": 1440,
+        "scroll": 1425
+      }
+    ],
+    "runtimeErrors": []
+  },
+  "errors": []
+}

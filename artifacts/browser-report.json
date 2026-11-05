@@ -1,0 +1,45 @@
+{
+  "reports": [
+    {
+      "width": 1440,
+      "scroll": 1425,
+      "broken": [],
+      "heading": "61.92px",
+      "buttonBackground": "rgb(9, 133, 138)",
+      "issues": []
+    },
+    {
+      "width": 360,
+      "scroll": 360,
+      "broken": [],
+      "heading": "35px",
+      "buttonBackground": "rgb(9, 133, 138)",
+      "issues": []
+    },
+    {
+      "width": 375,
+      "scroll": 375,
+      "broken": [],
+      "heading": "35.25px",
+      "buttonBackground": "rgb(9, 133, 138)",
+      "issues": []
+    },
+    {
+      "width": 390,
+      "scroll": 390,
+      "broken": [],
+      "heading": "36.66px",
+      "buttonBackground": "rgb(9, 133, 138)",
+      "issues": []
+    },
+    {
+      "width": 430,
+      "scroll": 430,
+      "broken": [],
+      "heading": "40.42px",
+      "buttonBackground": "rgb(9, 133, 138)",
+      "issues": []
+    }
+  ],
+  "errors": []
+}

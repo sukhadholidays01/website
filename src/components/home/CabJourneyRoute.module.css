@@ -1,0 +1,9 @@
+.route { padding:0 4px 16px; border-bottom:1px solid #e6eded; }
+.header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.header p { color:#087f83; font-size:10px; font-weight:700; letter-spacing:1.8px; }
+.header>span { font-size:10px; color:#708582; background:#f3f7f5; border:1px solid #e4eeea; padding:4px 9px; border-radius:20px; }
+.desktop { width:100%; height:auto; max-height:210px; }
+.mobile { display:none; }
+.itinerary { display:flex; align-items:center; justify-content:center; gap:9px; color:#67817d; font-size:11px; }
+.itinerary svg { flex-shrink:0; color:#8da9a4; }
+@media(max-width:700px) { .route { padding:0 0 14px; } .desktop { display:none; } .mobile { display:block; width:100%; height:218px; } .itinerary { gap:7px; font-size:11px; } .labels { font-size:17px; } }

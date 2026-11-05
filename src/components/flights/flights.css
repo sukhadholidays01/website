@@ -1,0 +1,72 @@
+/* Flights-only product styles; shared site tokens and navigation stay untouched. */
+.flight-experience .flight-console {
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: white;
+  padding: 1.5rem;
+  box-shadow: 0 8px 30px rgb(11 55 102 / 4%);
+}
+.flight-experience .flight-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--brand-blue);
+}
+.flight-experience .flight-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 0.8rem 1rem;
+  background: var(--background);
+}
+.flight-experience .flight-field select,
+.flight-experience .flight-field input {
+  min-height: 44px;
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--brand-navy);
+}
+.flight-experience .flight-field input[type="date"] {
+  font-size: 1rem;
+}
+.flight-input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: white;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.875rem;
+}
+.flight-experience .flight-field:focus-within {
+  border-color: var(--brand-teal);
+}
+@media (max-width: 639px) {
+  .flight-experience .flight-console {
+    padding: 1rem;
+  }
+  .flight-experience .flight-field {
+    padding: 0.65rem 0.8rem;
+  }
+}
+@media (max-width: 639px) {
+  .flight-experience .flight-date-row input[type="date"] {
+    font-size: 0.875rem;
+  }
+  .flight-experience .flight-field select {
+    font-size: 1rem;
+  }
+}

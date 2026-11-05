@@ -1,0 +1,28 @@
+# Set these in Hostinger's environment settings. Never upload local .env files.
+NODE_ENV=production
+CAB_STORAGE_MODE=mysql
+CAB_SITE_ORIGIN=https://YOUR-DOMAIN
+DB_HOST=HOSTINGER-PROVIDED-HOST
+DB_PORT=3306
+DB_NAME=HOSTINGER-PREFIXED-PRODUCTION-DATABASE
+DB_USER=DEDICATED-APPLICATION-USER
+DB_PASSWORD=SET-IN-SECRET-STORE
+# Only enable TLS where supported; for remote MySQL use a trusted CA.
+DB_SSL=false
+# DB_SSL_CA=PEM-CA-WITH-ESCAPED-NEWLINES
+# Optional operations access; leave unset to disable login.
+CAB_ADMIN_PASSWORD=
+CAB_SESSION_SECRET=
+# Optional email: preview never sends. Enable settings.notifications separately.
+CAB_EMAIL_MODE=preview
+CAB_EMAIL_SEND_ENABLED=false
+SMTP_HOST=
+SMTP_PORT=465
+SMTP_USER=
+SMTP_PASS=
+BOOKING_EMAIL=
+# Optional click-to-chat business contact; this is public, not an API secret.
+NEXT_PUBLIC_WHATSAPP_PHONE=
+# Migrations only: supply temporarily AFTER review, backup and explicit approval.
+# CAB_MIGRATION_APPROVED_DB=EXACT-PRODUCTION-DB-NAME
+# CAB_BACKUP_REFERENCE=VERIFIED-BACKUP-ID

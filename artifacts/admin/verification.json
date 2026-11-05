@@ -1,0 +1,413 @@
+{
+  "responsive": [
+    {
+      "route": "/admin",
+      "width": 360,
+      "pageWidth": 360
+    },
+    {
+      "route": "/admin/bookings",
+      "width": 360,
+      "pageWidth": 360
+    },
+    {
+      "route": "/admin/itineraries",
+      "width": 360,
+      "pageWidth": 360
+    },
+    {
+      "route": "/admin/offers",
+      "width": 360,
+      "pageWidth": 360
+    },
+    {
+      "route": "/admin/reports",
+      "width": 360,
+      "pageWidth": 360
+    },
+    {
+      "route": "/admin",
+      "width": 375,
+      "pageWidth": 375
+    },
+    {
+      "route": "/admin/bookings",
+      "width": 375,
+      "pageWidth": 375
+    },
+    {
+      "route": "/admin/itineraries",
+      "width": 375,
+      "pageWidth": 375
+    },
+    {
+      "route": "/admin/offers",
+      "width": 375,
+      "pageWidth": 375
+    },
+    {
+      "route": "/admin/reports",
+      "width": 375,
+      "pageWidth": 375
+    },
+    {
+      "route": "/admin",
+      "width": 390,
+      "pageWidth": 390
+    },
+    {
+      "route": "/admin/bookings",
+      "width": 390,
+      "pageWidth": 390
+    },
+    {
+      "route": "/admin/itineraries",
+      "width": 390,
+      "pageWidth": 390
+    },
+    {
+      "route": "/admin/offers",
+      "width": 390,
+      "pageWidth": 390
+    },
+    {
+      "route": "/admin/reports",
+      "width": 390,
+      "pageWidth": 390
+    },
+    {
+      "route": "/admin",
+      "width": 430,
+      "pageWidth": 430
+    },
+    {
+      "route": "/admin/bookings",
+      "width": 430,
+      "pageWidth": 430
+    },
+    {
+      "route": "/admin/itineraries",
+      "width": 430,
+      "pageWidth": 430
+    },
+    {
+      "route": "/admin/offers",
+      "width": 430,
+      "pageWidth": 430
+    },
+    {
+      "route": "/admin/reports",
+      "width": 430,
+      "pageWidth": 430
+    },
+    {
+      "route": "/admin",
+      "width": 768,
+      "pageWidth": 753
+    },
+    {
+      "route": "/admin/bookings",
+      "width": 768,
+      "pageWidth": 768
+    },
+    {
+      "route": "/admin/itineraries",
+      "width": 768,
+      "pageWidth": 753
+    },
+    {
+      "route": "/admin/offers",
+      "width": 768,
+      "pageWidth": 753
+    },
+    {
+      "route": "/admin/reports",
+      "width": 768,
+      "pageWidth": 753
+    },
+    {
+      "route": "/admin",
+      "width": 1024,
+      "pageWidth": 1009
+    },
+    {
+      "route": "/admin/bookings",
+      "width": 1024,
+      "pageWidth": 1024
+    },
+    {
+      "route": "/admin/itineraries",
+      "width": 1024,
+      "pageWidth": 1009
+    },
+    {
+      "route": "/admin/offers",
+      "width": 1024,
+      "pageWidth": 1024
+    },
+    {
+      "route": "/admin/reports",
+      "width": 1024,
+      "pageWidth": 1009
+    },
+    {
+      "route": "/admin",
+      "width": 1280,
+      "pageWidth": 1265
+    },
+    {
+      "route": "/admin/bookings",
+      "width": 1280,
+      "pageWidth": 1280
+    },
+    {
+      "route": "/admin/itineraries",
+      "width": 1280,
+      "pageWidth": 1265
+    },
+    {
+      "route": "/admin/offers",
+      "width": 1280,
+      "pageWidth": 1280
+    },
+    {
+      "route": "/admin/reports",
+      "width": 1280,
+      "pageWidth": 1265
+    },
+    {
+      "route": "/admin",
+      "width": 1440,
+      "pageWidth": 1425
+    },
+    {
+      "route": "/admin/bookings",
+      "width": 1440,
+      "pageWidth": 1440
+    },
+    {
+      "route": "/admin/itineraries",
+      "width": 1440,
+      "pageWidth": 1425
+    },
+    {
+      "route": "/admin/offers",
+      "width": 1440,
+      "pageWidth": 1440
+    },
+    {
+      "route": "/admin/reports",
+      "width": 1440,
+      "pageWidth": 1425
+    }
+  ],
+  "routes": [
+    {
+      "route": "/admin",
+      "h1": "Good Morning, Admin",
+      "notFound": false,
+      "overflow": false
+    },
+    {
+      "route": "/admin/bookings",
+      "h1": "Bookings",
+      "notFound": false,
+      "overflow": false
+    },
+    {
+      "route": "/admin/enquiries",
+      "h1": "Enquiries",
+      "notFound": false,
+      "overflow": false
+    },
+    {
+      "route": "/admin/trips",
+      "h1": "Trips",
+      "notFound": false,
+      "overflow": false
+    },
+    {
+      "route": "/admin/itineraries",
+      "h1": "Itinerary Studio",
+      "notFound": false,
+      "overflow": false
+    },
+    {
+      "route": "/admin/drivers",
+      "h1": "Drivers",
+      "notFound": false,
+      "overflow": false
+    },
+    {
+      "route": "/admin/vehicles",
+      "h1": "Vehicles",
+      "notFound": false,
+      "overflow": false
+    },
+    {
+      "route": "/admin/packages",
+      "h1": "Holiday Packages",
+      "notFound": false,
+      "overflow": false
+    },
+    {
+      "route": "/admin/destinations",
+      "h1": "Destinations",
+      "notFound": false,
+      "overflow": false
+    },
+    {
+      "route": "/admin/custom-routes",
+      "h1": "Custom Routes",
+      "notFound": false,
+      "overflow": false
+    },
+    {
+      "route": "/admin/customers",
+      "h1": "Customers",
+      "notFound": false,
+      "overflow": false
+    },
+    {
+      "route": "/admin/payments",
+      "h1": "Payments",
+      "notFound": false,
+      "overflow": false
+    },
+    {
+      "route": "/admin/documents",
+      "h1": "Documents",
+      "notFound": false,
+      "overflow": false
+    },
+    {
+      "route": "/admin/offers",
+      "h1": "Offers & Notifications",
+      "notFound": false,
+      "overflow": false
+    },
+    {
+      "route": "/admin/reviews",
+      "h1": "Reviews",
+      "notFound": false,
+      "overflow": false
+    },
+    {
+      "route": "/admin/reports",
+      "h1": "Reports",
+      "notFound": false,
+      "overflow": false
+    },
+    {
+      "route": "/admin/users",
+      "h1": "Users & Roles",
+      "notFound": false,
+      "overflow": false
+    },
+    {
+      "route": "/admin/settings",
+      "h1": "Settings",
+      "notFound": false,
+      "overflow": false
+    },
+    {
+      "route": "/admin/activity",
+      "h1": "Activity Log",
+      "notFound": false,
+      "overflow": false
+    },
+    {
+      "route": "/admin/hotels",
+      "h1": "Hotels",
+      "notFound": false,
+      "overflow": false
+    },
+    {
+      "route": "/admin/flights",
+      "h1": "Flights",
+      "notFound": false,
+      "overflow": false
+    },
+    {
+      "route": "/admin/bus",
+      "h1": "Bus",
+      "notFound": false,
+      "overflow": false
+    },
+    {
+      "route": "/admin/cabs",
+      "h1": "Cabs",
+      "notFound": false,
+      "overflow": false
+    },
+    {
+      "route": "/admin/bookings/SH-DEMO-001",
+      "h1": "Golden Triangle",
+      "notFound": false,
+      "overflow": false
+    },
+    {
+      "route": "/admin/drivers/driver-1",
+      "h1": "Demo Driver A",
+      "notFound": false,
+      "overflow": false
+    },
+    {
+      "route": "/",
+      "h1": "Plan the journey.Create the memory.",
+      "overflow": false
+    },
+    {
+      "route": "/flights",
+      "h1": "Find your next flight.",
+      "overflow": false
+    },
+    {
+      "route": "/holidays",
+      "h1": "Find a placeworth remembering.",
+      "overflow": false
+    },
+    {
+      "route": "/holidays/ayodhya-essentials",
+      "h1": "Ayodhya Essentials",
+      "overflow": false
+    },
+    {
+      "route": "/bus",
+      "h1": "Find your bus journey.",
+      "overflow": false
+    },
+    {
+      "route": "/cabs",
+      "h1": "Take the scenic route.",
+      "overflow": false
+    },
+    {
+      "route": "/custom-routes",
+      "h1": "YOUR JOURNEY.YOUR WAY.",
+      "overflow": false
+    },
+    {
+      "route": "/about",
+      "h1": "Travel planning shaped around your journey.",
+      "overflow": false
+    },
+    {
+      "route": "/contact",
+      "h1": "Tell us about your next journey.",
+      "overflow": false
+    }
+  ],
+  "workflows": [
+    "assignment",
+    "payment",
+    "itinerary",
+    "enquiry conversion",
+    "cancellation"
+  ],
+  "errors": [],
+  "redirect": {
+    "status": 308,
+    "location": "/cabs"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "carMovement": [
+    "1.48141%",
+    "50.6958%"
+  ],
+  "keyboard": "Tab and Enter select SUV",
+  "sticky": {
+    "bottom": 800,
+    "viewport": 800,
+    "width": 360
+  },
+  "enquiryFocus": true
+}

@@ -1,0 +1,101 @@
+﻿{
+    "notification":  [
+                         {
+                             "desktop":  {
+                                             "right":  24,
+                                             "bottom":  24,
+                                             "width":  350
+                                         },
+                             "maxCards":  1,
+                             "rotatedIds":  [
+                                                "offer-india",
+                                                "offer-dubai"
+                                            ],
+                             "gapSamples":  12,
+                             "hover":  "pass",
+                             "focus":  "pass",
+                             "close":  "pass"
+                         },
+                         {
+                             "width":  336,
+                             "left":  12,
+                             "right":  348,
+                             "bottom":  12,
+                             "overflow":  false,
+                             "visibleCards":  1,
+                             "viewportWidth":  360
+                         },
+                         {
+                             "width":  351,
+                             "left":  12,
+                             "right":  363,
+                             "bottom":  12,
+                             "overflow":  false,
+                             "visibleCards":  1,
+                             "viewportWidth":  375
+                         },
+                         {
+                             "width":  366,
+                             "left":  12,
+                             "right":  378,
+                             "bottom":  12,
+                             "overflow":  false,
+                             "visibleCards":  1,
+                             "viewportWidth":  390
+                         },
+                         {
+                             "width":  380,
+                             "left":  25,
+                             "right":  405,
+                             "bottom":  12,
+                             "overflow":  false,
+                             "visibleCards":  1,
+                             "viewportWidth":  430
+                         },
+                         {
+                             "width":  350,
+                             "left":  379,
+                             "right":  729,
+                             "bottom":  24,
+                             "overflow":  false,
+                             "visibleCards":  1,
+                             "viewportWidth":  768
+                         },
+                         {
+                             "width":  350,
+                             "left":  635,
+                             "right":  985,
+                             "bottom":  24,
+                             "overflow":  false,
+                             "visibleCards":  1,
+                             "viewportWidth":  1024
+                         },
+                         {
+                             "width":  350,
+                             "left":  891,
+                             "right":  1241,
+                             "bottom":  24,
+                             "overflow":  false,
+                             "visibleCards":  1,
+                             "viewportWidth":  1280
+                         },
+                         {
+                             "width":  350,
+                             "left":  1051,
+                             "right":  1401,
+                             "bottom":  24,
+                             "overflow":  false,
+                             "visibleCards":  1,
+                             "viewportWidth":  1440
+                         }
+                     ],
+    "documents":  [
+                      "upload and preview"
+                  ],
+    "roles":  [
+                  "driver filtering and module boundary"
+              ],
+    "errors":  [
+
+               ]
+}

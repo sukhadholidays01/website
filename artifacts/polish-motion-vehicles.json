@@ -1,0 +1,34 @@
+{
+  "reduced": {
+    "media": true,
+    "static": 2,
+    "animated": 0
+  },
+  "vehicles": [
+    {
+      "name": "Sedan",
+      "loaded": true,
+      "active": "true",
+      "pageWidth": 390
+    },
+    {
+      "name": "SUV",
+      "loaded": true,
+      "active": "true",
+      "pageWidth": 390
+    },
+    {
+      "name": "Luxury",
+      "loaded": true,
+      "active": "true",
+      "pageWidth": 390
+    },
+    {
+      "name": "Tempo Traveller",
+      "loaded": true,
+      "active": "true",
+      "pageWidth": 390
+    }
+  ],
+  "carMoves": true
+}

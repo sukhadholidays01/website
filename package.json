@@ -1,25 +1,49 @@
 {
   "name": "sukhd-holidays",
   "version": "0.1.0",
+  "type": "module",
   "private": true,
+  "engines": {
+    "node": "22.x",
+    "npm": ">=10"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "node scripts/db-migrate.mjs",
+    "test:cabs": "node scripts/check-cab-system.mjs",
+    "db:review": "node scripts/db-migrate.mjs --review",
+    "db:verify": "node scripts/db-verify.mjs",
+    "test:cab-mysql": "node scripts/check-cab-mysql.mjs",
+    "test:production-local": "node scripts/check-production-local.mjs"
   },
   "dependencies": {
-    "next": "16.3.8",
+    "@hookform/resolvers": "^5.9.1",
+    "dotenv": "^18.0.9",
+    "framer-motion": "^13.5.0",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^1.49.0",
+    "mysql2": "^3.24.6",
+    "next": "^16.4.3",
+    "nodemailer": "^10.2.1",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "react-hook-form": "^7.89.0",
+    "server-only": "^0.0.1",
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/leaflet": "^1.9.22",
     "@types/node": "^20",
+    "@types/nodemailer": "^8.0.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.3.8",
+    "eslint-config-next": "^16.4.3",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

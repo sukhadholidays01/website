@@ -1,0 +1,12 @@
+{
+  "testedAt": "2026-11-05T15:23:18.590Z",
+  "target": "local production server / development MySQL only",
+  "checks": [
+    "Public pages and favicon return 200; security headers present",
+    "Production server health reaches local MySQL",
+    "Journey search returns request categories without invented prices",
+    "HTTP booking, invalid customer, idempotency, private lookup, confirmation route and persisted cancellation",
+    "Cross-origin write and unauthenticated operations rejected",
+    "API result independently verified in MySQL; controlled cancelled record retained: SH-CAB-38A77CAA2DEE4DAE01AFEC0E"
+  ]
+}
