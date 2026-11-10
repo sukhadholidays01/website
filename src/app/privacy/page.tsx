@@ -114,6 +114,12 @@ export default function PrivacyPage() {
             </h2>
             <div className="mt-3 space-y-3 text-sm leading-7 text-secondary">
               <p>
+                To request deletion of your personal information, follow the steps on our{" "}
+                <Link href="/data-deletion" className="font-medium text-brand-blue hover:underline">
+                  Data Deletion page
+                </Link>.
+              </p>
+              <p>
                 To make a privacy request or ask a question about this policy,
                 email{" "}
                 <a

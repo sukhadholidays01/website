@@ -69,8 +69,9 @@ export function Footer() {
       <div className="border-t border-border">
         <div className="mx-auto flex w-full max-w-[90rem] flex-col gap-3 px-4 py-5 text-caption text-secondary sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <p>© {new Date().getFullYear()} Sukhad Holidays. Creating Happy Memories.</p>
-          <div className="flex gap-5">
+          <div className="flex flex-wrap gap-x-5 gap-y-3">
             <Link href="/privacy-policy" className="hover:text-brand-blue">Privacy Policy</Link>
+            <Link href="/data-deletion" className="hover:text-brand-blue">Data Deletion</Link>
             <Link href="/terms" className="hover:text-brand-blue">Terms & Conditions</Link>
           </div>
         </div>
