@@ -1,7 +1,7 @@
 "use client";
+import { useToastFeedback } from "@/components/notifications/ToastProvider";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { Check, Copy, RefreshCw, ShieldCheck } from "lucide-react";
 import { cabApi } from "@/lib/cab/client";
 import {
@@ -14,9 +14,10 @@ import {
 import { FareDetails } from "./CabBookingFlow";
 import "./cab-live.css";
 import { CabPaymentPanel } from "./CabPaymentPanel";
-const CabMap = dynamic(() => import("./CabMap").then((m) => m.CabMap), {
-  ssr: false,
-});
+import { CabTracking } from "./CabTracking";
+import { GuestBookingAccess } from "./GuestBookingAccess";
+import { GuestCommercial } from "./CabCommercial";
+import { GuestDocuments } from "./GuestDocuments";
 const subscribeHash = (notify: () => void) => {
   window.addEventListener("hashchange", notify);
   return () => window.removeEventListener("hashchange", notify);
@@ -64,16 +65,29 @@ const statusText: Record<CabStatus, { title: string; description: string }> = {
       "Cancellation does not automatically refund a payment. Contact operations about any outstanding refund.",
   },
 };
-export function CabBookingStatus({ id }: { id: string }) {
+export function CabBookingStatus({id}:{id:string}) { return <GuestBookingAccess id={id}>{access=><BookingStatusContent key={access.assurance} id={id} assurance={access.assurance} privateLink={access.privateLink}/>}</GuestBookingAccess>; }
+function BookingStatusContent({id,assurance,privateLink}:{id:string;assurance:"link"|"otp";privateLink:string}) {
+  const verified = true;
   const token = useSyncExternalStore(subscribeHash, accessSnapshot, () => "");
   const [booking, setBooking] = useState<PublicCabBooking>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  useToastFeedback(error, message, "info");
   const [accepted, setAccepted] = useState(false);
   const [cancel, setCancel] = useState(false);
+  const currentStatus = booking?.status;
+  useEffect(() => {
+    if ((!verified && !token) || !currentStatus || ["COMPLETED", "CANCELLED"].includes(currentStatus)) return;
+    const controller = new AbortController();
+    const timer = setInterval(() => {
+      if (document.hidden) return;
+      void cabApi<{ booking: PublicCabBooking }>("bookings/" + id, { token, signal: controller.signal }).then(data => { if (!controller.signal.aborted) setBooking(data.booking); }).catch(() => {});
+    }, 15000);
+    return () => { clearInterval(timer); controller.abort(); };
+  }, [id, token, currentStatus, verified]);
   const load = useCallback(async () => {
-    if (!token) return;
+    if (!verified && !token) return;
     setBusy(true);
     setError("");
     try {
@@ -88,9 +102,9 @@ export function CabBookingStatus({ id }: { id: string }) {
     } finally {
       setBusy(false);
     }
-  }, [id, token]);
+  }, [id, token, verified]);
   useEffect(() => {
-    if (!token) return;
+    if (!verified && !token) return;
     const controller = new AbortController();
     void cabApi<{ booking: PublicCabBooking }>("bookings/" + id, {
       token,
@@ -105,7 +119,7 @@ export function CabBookingStatus({ id }: { id: string }) {
         if (!controller.signal.aborted) setError(e.message);
       });
     return () => controller.abort();
-  }, [id, token]);
+  }, [id, token, verified]);
   async function act(action: string) {
     if (!booking) return;
     setBusy(true);
@@ -132,7 +146,7 @@ export function CabBookingStatus({ id }: { id: string }) {
   const balance = booking ? cabBalance(booking) : null;
   const visibleError =
     error ||
-    (!token
+    (!verified && !token
       ? "Open the complete private booking link, including its access code."
       : "");
   return (
@@ -144,7 +158,7 @@ export function CabBookingStatus({ id }: { id: string }) {
           </Link>
           <button
             className="cb-btn"
-            disabled={busy || !token}
+            disabled={busy}
             onClick={() => void load()}
           >
             <RefreshCw size={15} />
@@ -154,14 +168,19 @@ export function CabBookingStatus({ id }: { id: string }) {
         <p className="cb-callout">
           {booking?.development ? (
             <>
-              <strong>Development preview.</strong> This request is temporary
-              mock data and resets when the development server restarts.
+              <strong>Development record.</strong> This record is labelled for development;
+              it does not establish a live booking or payment.
             </>
           ) : (
             <>
-              <strong>Request status.</strong> This is not a confirmed ride.
-              Operations must confirm the fare and availability. No online
-              payment is collected.
+              <strong>Booking status.</strong>{" "}
+              {!booking ? "Checking the latest booking status…" : booking.status === "CANCELLED"
+                ? "This booking is cancelled. Refunds and balances are reviewed separately."
+                : booking.status === "COMPLETED"
+                  ? "This journey is complete. Payment balances remain tracked separately."
+                  : ["CONFIRMED", "ASSIGNED", "IN_PROGRESS"].includes(booking.status)
+                    ? "Operations has confirmed this booking. Payment collection, assignment and journey progress are tracked separately."
+                    : "Your request is pending confirmation. Operations must confirm the accepted quotation and availability before payment arrangements become available."}
             </>
           )}
         </p>
@@ -185,9 +204,11 @@ export function CabBookingStatus({ id }: { id: string }) {
               <div className="cb-reference">{booking.id}</div>
               <button
                 className="cb-btn"
+                disabled={!privateLink}
                 onClick={async () => {
                   try {
-                    await navigator.clipboard.writeText(window.location.href);
+                    if (!privateLink) throw Error("Use mobile verification to request a replacement private link.");
+                    await navigator.clipboard.writeText(privateLink);
                     setMessage(
                       "Private booking link copied. Keep it safe; anyone with this link can view this request.",
                     );
@@ -227,7 +248,7 @@ export function CabBookingStatus({ id }: { id: string }) {
                       <dt>Pickup · India time</dt>
                       <dd>{booking.journey.departure.replace("T", " at ")}</dd>
                     </div>
-                    {booking.journey.tripType === "round-trip" && (
+                    {["round-trip", "multi-day"].includes(booking.journey.tripType) && (
                       <div>
                         <dt>Return arrival · India time</dt>
                         <dd>
@@ -256,8 +277,10 @@ export function CabBookingStatus({ id }: { id: string }) {
                       </dd>
                     </div>
                   </dl>
-                  <FareDetails fare={booking.fare} />
-                  {booking.status === "QUOTED" && (
+                  {booking.journey.itinerary && <section aria-label="Travel itinerary"><h3>Multi-day itinerary</h3><ol>{booking.journey.itinerary.stops.map((stop,index)=><li key={index}>{stop.place.label}{stop.overnight ? " · Overnight stay" : ""}{stop.notes ? " · "+stop.notes : ""}</li>)}</ol>{booking.journey.itinerary.requirements && <p>{booking.journey.itinerary.requirements}</p>}</section>}
+                  {assurance==="otp"?<FareDetails fare={booking.fare}/>:<p className="cb-callout">Verify your registered mobile to review quotations, acceptance actions and payment details.</p>}
+                  {assurance === "otp" && <GuestCommercial key={booking.updatedAt} bookingId={booking.id}/>}
+                  {assurance === "otp" && booking.status === "QUOTED" && (
                     <div className="cb-quote-accept">
                       <label className="cb-consent">
                         <input
@@ -290,7 +313,7 @@ export function CabBookingStatus({ id }: { id: string }) {
                       <p>{booking.assignment.vehicle}</p>
                     </div>
                   )}
-                  <h3 className="cb-subtitle">Payment summary</h3>
+                  {assurance === "otp" ? <><h3 className="cb-subtitle">Payment summary</h3>
                   <div className="cb-payment-grid">
                     <div>
                       <span>Agreed total</span>
@@ -314,7 +337,7 @@ export function CabBookingStatus({ id }: { id: string }) {
                   <p className="cb-note">
                     {booking.development
                       ? "This development summary includes manual test records and simulated payments/refunds. No money moves in the development flow."
-                      : "Payments are not collected online. Any payment or refund shown here must be confirmed directly with Sukhad Holidays."}
+                      : "Verified online payments and approved offline receipts appear here. Booking status and payment status are tracked separately."}
                   </p>
                   {[
                     "CONFIRMED",
@@ -346,7 +369,8 @@ export function CabBookingStatus({ id }: { id: string }) {
                       ))}
                     </div>
                   )}
-                  {["REQUESTED", "QUOTED", "ACCEPTED"].includes(
+                  </> : <p className="cb-callout">Verify your mobile above to review payment details, accept quotations or change this request.</p>}
+                  {assurance === "otp" && ["REQUESTED", "QUOTED", "ACCEPTED"].includes(
                     booking.status,
                   ) && (
                     <div className="cb-cancel">
@@ -381,6 +405,7 @@ export function CabBookingStatus({ id }: { id: string }) {
                     </div>
                   )}
                 </section>
+                {assurance === "otp" && <GuestDocuments bookingId={id}/>}
                 <section className="cb-main-card cb-history">
                   <h2>Journey updates</h2>
                   <ol>
@@ -402,16 +427,12 @@ export function CabBookingStatus({ id }: { id: string }) {
                 </section>
               </div>
               <aside className="cb-aside">
-                <CabMap
-                  origin={booking.journey.origin}
-                  destination={booking.journey.destination}
-                  route={booking.route}
-                />
+                <CabTracking booking={booking} token={token} />
                 <div className="cb-route-info">
                   <ShieldCheck size={24} />
                   <h3>Keep your booking link safe.</h3>
                   <p className="cb-note">
-                    This private link gives access to your journey and quote.
+                    This private link shows journey updates. Mobile verification protects quotation and payment details.
                     Save it yourself.                     Email templates and delivery previews are available to
                     operations; messages are not sent unless delivery is
                     explicitly configured.

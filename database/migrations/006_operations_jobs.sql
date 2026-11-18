@@ -1,0 +1,40 @@
+CREATE TABLE IF NOT EXISTS cab_jobs (
+  job_id CHAR(36) NOT NULL PRIMARY KEY,
+  job_type VARCHAR(32) NOT NULL,
+  payload_version SMALLINT UNSIGNED NOT NULL,
+  payload JSON NOT NULL,
+  job_status VARCHAR(16) NOT NULL DEFAULT 'PENDING',
+  dedupe_key CHAR(64) NOT NULL,
+  correlation_id VARCHAR(100) NULL,
+  scheduled_at DATETIME(3) NOT NULL,
+  next_run_at DATETIME(3) NOT NULL,
+  attempts SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  max_attempts SMALLINT UNSIGNED NOT NULL DEFAULT 5,
+  claim_token CHAR(36) NULL,
+  lease_until DATETIME(3) NULL,
+  last_run_at DATETIME(3) NULL,
+  completed_at DATETIME(3) NULL,
+  error_category VARCHAR(40) NULL,
+  error_summary VARCHAR(255) NULL,
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  UNIQUE KEY uq_cab_jobs_dedupe (dedupe_key),
+  KEY ix_cab_jobs_ready (job_status,next_run_at,job_id),
+  KEY ix_cab_jobs_lease (job_status,lease_until),
+  CONSTRAINT ck_job_status CHECK (job_status IN ('PENDING','RUNNING','COMPLETED','RETRY_WAIT','FAILED','CANCELLED'))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE IF NOT EXISTS cab_job_runs (
+  run_id CHAR(36) NOT NULL PRIMARY KEY,
+  job_id CHAR(36) NOT NULL,
+  attempt SMALLINT UNSIGNED NOT NULL,
+  run_status VARCHAR(24) NOT NULL,
+  worker_id CHAR(36) NOT NULL,
+  actor VARCHAR(100) NOT NULL,
+  started_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  finished_at DATETIME(3) NULL,
+  error_category VARCHAR(40) NULL,
+  KEY ix_job_runs_job (job_id,started_at),
+  KEY ix_job_runs_status_time (run_status,started_at),
+  CONSTRAINT fk_job_runs_job FOREIGN KEY (job_id) REFERENCES cab_jobs(job_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

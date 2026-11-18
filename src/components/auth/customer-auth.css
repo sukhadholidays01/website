@@ -1,0 +1,33 @@
+.customer-auth-stage{position:relative;isolation:isolate;display:flex;justify-content:center;align-items:flex-start;padding:44px 16px 56px;background:var(--background);overflow:hidden}
+.customer-auth-accent{position:absolute;inset:0;z-index:-1;opacity:.28;pointer-events:none}.customer-auth-accent img{object-fit:cover;filter:saturate(.9)}
+.customer-auth-card{width:100%;max-width:460px;padding:30px;background:var(--white);border:1px solid var(--border);border-radius:18px;box-shadow:0 12px 36px #0b37660b;color:var(--text-primary)}
+.customer-auth-eyebrow{font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--brand-blue);margin:0 0 14px}
+.customer-auth-card h1{font-size:28px;font-weight:650;line-height:1.2;letter-spacing:-.7px;color:var(--brand-navy);margin:0;overflow-wrap:anywhere}
+.customer-auth-copy{font-size:14px;line-height:1.75;color:var(--text-secondary);margin:13px 0 23px;overflow-wrap:anywhere}
+.customer-auth-form fieldset{border:0;margin:0;padding:0;display:grid;gap:17px;min-width:0}.customer-auth-form label{display:block;font-size:13px;font-weight:600;color:var(--brand-navy);margin-bottom:7px}
+.customer-auth-form input:not([type=checkbox]){display:block;width:100%;min-width:0;height:46px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--white);font:400 14px/1.4 var(--font-sans);color:var(--text-primary);outline:none;transition:border-color .15s,box-shadow .15s}
+.customer-auth-form input:focus{border-color:var(--brand-teal-hover);box-shadow:0 0 0 3px var(--brand-light-teal)}.customer-auth-form input[aria-invalid=true]{border-color:var(--error)}
+.customer-auth-form small{display:block;font-size:11px;line-height:1.6;color:var(--text-secondary);margin-top:7px}.customer-auth-form small.customer-field-error{color:var(--error)}
+.customer-password{position:relative}.customer-password input{padding-right:48px!important}.customer-password button{position:absolute;right:3px;top:3px;display:grid;place-items:center;width:40px;height:40px;border:0;background:transparent;color:var(--text-secondary);border-radius:7px}
+.customer-auth-form .customer-consent{display:flex;align-items:flex-start;gap:10px;font-size:12px;font-weight:400;line-height:1.7;margin:0}.customer-consent input{margin-top:4px;width:16px;height:16px;accent-color:var(--brand-blue);flex-shrink:0}
+.customer-auth-card a{color:var(--brand-blue);text-decoration:underline;text-underline-offset:3px}.customer-auth-card a:hover{color:var(--brand-navy)}
+.customer-auth-submit{display:flex;justify-content:center;align-items:center;gap:9px;min-height:46px;width:100%;border:0;border-radius:8px;background:var(--brand-blue);color:#fff!important;font:600 14px/1.4 var(--font-sans);padding:12px 16px;text-decoration:none!important;transition:background .15s}
+.customer-auth-submit:hover{background:var(--brand-navy)}.customer-auth-submit:disabled,.customer-auth-resend:disabled{opacity:.6;cursor:not-allowed}
+.customer-auth-resend{display:inline-flex;align-items:center;min-height:44px;margin-top:10px;border:0;background:transparent;padding:0;color:var(--brand-blue);font:600 13px/1.5 var(--font-sans);text-decoration:underline;text-underline-offset:4px}
+.customer-auth-switch{font-size:13px;line-height:1.7;margin:22px 0 0;color:var(--text-secondary);text-align:center}.customer-auth-switch a{display:inline-flex;align-items:center;gap:6px}
+.customer-auth-guest{display:flex;justify-content:center;flex-wrap:wrap;gap:4px 16px;border-top:1px solid var(--border);padding-top:15px;margin-top:20px}.customer-auth-guest a{display:inline-flex;align-items:center;min-height:36px;font-size:12px;color:var(--text-secondary)}
+.customer-auth-error{border:1px solid #fecaca;background:#fff5f5;padding:10px 12px;border-radius:8px;font-size:12px;line-height:1.6;color:var(--error);margin:0;overflow-wrap:anywhere}
+.customer-auth-mail{margin-bottom:15px;color:var(--brand-teal-hover)}.customer-profile{display:grid;gap:16px;margin:24px 0}.customer-profile dt{font-size:11px;color:var(--text-secondary);margin-bottom:5px}.customer-profile dd{font-size:14px;overflow-wrap:anywhere}
+.travel-welcome.customer-invitation{width:calc(100% - 32px);max-width:460px;border:1px solid var(--border);border-radius:18px;background:#fffefa;color:var(--text-primary);overflow-y:auto}
+.customer-invitation .travel-welcome-scene{display:block;min-height:0;padding:36px 30px 22px;position:relative;isolation:isolate;overflow:hidden}
+.customer-invitation .travel-welcome-photo{position:absolute;inset:0;z-index:-2;opacity:.3;pointer-events:none}.customer-invitation .travel-welcome-photo img{object-position:center}
+.customer-invitation-wash{position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(135deg,#ffffffe6,#e8f8fa66,#fffefa99)}
+.customer-invitation .travel-welcome-copy{padding-top:0;max-width:none}.customer-invitation .travel-welcome-copy h2{font-size:28px;font-weight:650;line-height:1.2;letter-spacing:-.6px;max-width:330px;color:var(--brand-navy)}
+.customer-invitation .travel-welcome-copy>p:not(.customer-auth-eyebrow){font-size:14px;line-height:1.7;margin:14px 0 0;color:var(--text-secondary)}
+.customer-invitation .travel-welcome-copy>.customer-auth-eyebrow{font-size:10px;color:var(--brand-blue);margin:0 0 16px;line-height:1.5}
+.customer-invitation .travel-welcome-close{top:12px;right:12px;width:36px;height:36px;background:#ffffffd9;color:var(--brand-navy);border:1px solid var(--border);backdrop-filter:none}
+.customer-invitation .travel-welcome-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px}.customer-invitation .travel-welcome-primary,.customer-invitation .travel-welcome-secondary{min-height:44px;font-size:13px;padding:10px 14px;border-radius:8px;backdrop-filter:none}
+.customer-invitation .travel-welcome-primary{background:var(--brand-blue);border-color:var(--brand-blue);color:white;box-shadow:none}.customer-invitation .travel-welcome-secondary{color:var(--brand-navy);background:white;border-color:var(--border)}
+.customer-invitation .travel-welcome-guest{display:flex;width:max-content;max-width:100%;margin:14px auto 0;min-height:40px;font-size:12px;color:var(--text-secondary)}
+@media(max-width:500px){.customer-auth-stage{padding:26px 16px 36px}.customer-auth-card{padding:25px 22px;border-radius:14px}.customer-auth-card h1{font-size:26px}.customer-invitation .travel-welcome-scene{padding:36px 24px 20px}.customer-invitation .travel-welcome-copy h2{font-size:26px}.customer-invitation .travel-welcome-actions{grid-template-columns:1fr}.customer-auth-guest{justify-content:flex-start}}
+@media(prefers-reduced-motion:reduce){.customer-auth-submit,.customer-auth-form input{transition:none}.customer-invitation .travel-welcome-primary:hover{transform:none}}

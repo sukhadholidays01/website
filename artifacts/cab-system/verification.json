@@ -7,17 +7,20 @@
     "Razorpay HMAC verification rejects tampered callbacks and raw webhook payloads",
     "Mock repository is explicitly non-persistent and rolls back failed atomic mutations",
     "Provider-independent routing: Mapbox contract, valid coordinates, no-route and timeout handling with no guessed distance",
+    "Server role permissions, signed-role tampering rejection and revoked cookie replay rejection",
     "Authenticated admin APIs, origin protection, HttpOnly sessions and operation without PostgreSQL credentials",
     "Configuration-driven customer search, labelled demo road data, dynamic vehicle fares and invalid-date/input handling",
     "Unique private development bookings, idempotent submissions and safe email preview outbox with zero SMTP sends",
+    "HTTP driver credential exchange, assignment isolation, GPS validation, customer/admin tracking access, on-way history and driver revocation",
     "Quote acceptance/re-quote protection, valid booking transitions and registered driver/vehicle conflict validation",
     "Pending, failed, successful and refunded mock payments; duplicate callback protection; payment and booking state separation",
-    "Live Razorpay callbacks/webhooks require valid signatures and remain disabled without persistent storage",
+    "Razorpay verification rejects malformed payloads and unauthorised orders; webhooks stay disabled without a configured persistent gateway",
     "Route draft/activate/deactivate workflow, road resolution, shared admin fare preview and revision protection",
     "Vehicle/driver create/edit, registration/phone uniqueness and invalid configuration protection",
     "Enabled hourly package flow and unavailable routing fallback to a custom quote without a guessed distance",
     "Round-trip and airport booking review with required customer details",
-    "Email rendering stays safe/unsent, credentials are not exposed and logout revokes server access"
+    "Email rendering stays safe/unsent, credentials are not exposed and logout revokes server access",
+    "Dedicated quote rate limit rejects the sixteenth request in one window"
   ],
   "browser": {
     "workflow": "passed",
@@ -98,6 +101,21 @@
         "scroll": 1425
       },
       {
+        "label": "Dashboard",
+        "width": 1440,
+        "scroll": 1425
+      },
+      {
+        "label": "Payments",
+        "width": 1440,
+        "scroll": 1425
+      },
+      {
+        "label": "Tracking",
+        "width": 1440,
+        "scroll": 1425
+      },
+      {
         "label": "Settings",
         "width": 1440,
         "scroll": 1425
@@ -124,6 +142,21 @@
       },
       {
         "label": "Drivers",
+        "width": 360,
+        "scroll": 360
+      },
+      {
+        "label": "Dashboard",
+        "width": 360,
+        "scroll": 360
+      },
+      {
+        "label": "Payments",
+        "width": 360,
+        "scroll": 360
+      },
+      {
+        "label": "Tracking",
         "width": 360,
         "scroll": 360
       },

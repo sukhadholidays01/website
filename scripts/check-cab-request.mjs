@@ -1,0 +1,16 @@
+import assert from "node:assert/strict";
+import {randomBytes,randomUUID} from "node:crypto";
+import {loadCabModule} from "./cab-test-loader.mjs";
+process.env.NODE_ENV="development";process.env.CAB_STORAGE_MODE="memory";process.env.CAB_ROUTING_PROVIDER="demo";
+const {cabPlaces}=loadCabModule("src/data/cabPlaces"),service=loadCabModule("src/lib/cab/service"),store=loadCabModule("src/lib/cab/store");
+const departure=new Date(Date.now()+3*86400000+330*60000).toISOString().slice(0,16);
+const input={journey:{tripType:"one-way",airportDirection:"pickup",origin:cabPlaces[0],destination:cabPlaces[1],departure,passengers:2,vehicle:"sedan",pickupAddress:"Synthetic pickup hotel",dropAddress:"Synthetic drop hotel"},customer:{name:"Synthetic Traveller",phone:"9000000000",email:"synthetic@example.invalid",notes:"Automated test only"},consent:true,requestKey:randomUUID(),accessToken:randomBytes(32).toString("hex")};
+const booking=await service.createCabBooking(input);assert(booking.status==="REQUESTED"&&booking.id.startsWith("SH-CAB-"));assert(!("accessHash" in booking)&&!("accessToken" in booking));assert((await service.createCabBooking(input)).id===booking.id);
+await assert.rejects(service.createCabBooking({...input,customer:{...input.customer,name:"Changed person"}}));
+await assert.rejects(service.createCabBooking({...input,requestKey:randomUUID(),consent:false}));
+await assert.rejects(service.createCabBooking({...input,requestKey:randomUUID(),customer:{...input.customer,phone:"bad"}}));
+await assert.rejects(service.customerAction(booking.id,"wrong","cancel"));
+await assert.rejects(service.customerAction(booking.id,input.accessToken,"accept","wrong-quote"));
+const cancelled=await service.customerAction(booking.id,input.accessToken,"cancel");assert(cancelled.status==="CANCELLED");
+const state=await store.readCabState();assert(state.bookings.filter(b=>b.id===booking.id).length===1);assert(state.operations.notifications.length>0);
+console.log("PASS booking creation, request status, private response, idempotency, passenger/consent validation, ownership, quote acceptance guard and cancellation. In-memory fixtures only; no real booking or email created.");

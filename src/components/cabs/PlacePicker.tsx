@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Search } from "lucide-react";
 import { cabPlaces } from "@/data/cabPlaces";
 import { cabApi } from "@/lib/cab/client";
@@ -19,6 +19,20 @@ export function PlacePicker({
   const [results, setResults] = useState<CabPlace[]>([]);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const suggestions = useId();
+  useEffect(() => {
+    if (query.trim().length < 2) return;
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      setBusy(true);
+      void cabApi<{places: CabPlace[];externalSearch:boolean}>("places?q="+encodeURIComponent(query),{signal:controller.signal}).then(data=>{
+        if(controller.signal.aborted)return;
+        setResults(data.places.filter(p=>airport?p.airport:!p.airport));
+        setMessage(data.externalSearch?"Choose a matching location below.":"Search matches the supported locations. Add your exact address below.");
+      }).catch(()=>{if(!controller.signal.aborted)setMessage("Location search is unavailable. Select a listed location and add your exact address.");}).finally(()=>{if(!controller.signal.aborted)setBusy(false);});
+    },400);
+    return ()=>{clearTimeout(timer);controller.abort();};
+  },[query,airport]);
   const places = cabPlaces.filter((p) => (airport ? p.airport : !p.airport));
   const options = [
     ...places,
@@ -77,6 +91,7 @@ export function PlacePicker({
         <div className="cb-search-inline">
           <input
             aria-label={`Search ${label.toLowerCase()}`}
+            aria-controls={suggestions}
             value={query}
             maxLength={150}
             onChange={(e) => setQuery(e.target.value)}
@@ -98,6 +113,9 @@ export function PlacePicker({
             <Search size={17} />
           </button>
         </div>
+        <ul id={suggestions} className="cb-location-suggestions" aria-label="Matching locations">
+          {query.trim().length >= 2 && results.slice(0,6).map(place=><li key={place.id}><button type="button" onClick={()=>{onChange(place);setQuery("");setResults([]);setMessage("Location selected. Add the exact address below.");}}>{place.label}</button></li>)}
+        </ul>
         {message && (
           <p className="cb-note" role="status">
             {message}

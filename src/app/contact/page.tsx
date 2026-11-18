@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 interface ContactPageProps {
-  searchParams: Promise<{ category?: string | string[] }>;
+  searchParams: Promise<{ category?: string | string[]; journey?:string }>;
 }
 
 const contactMessage = "Hello Sukhad Holidays, I would like to discuss a travel enquiry.";
@@ -55,7 +55,7 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
 
       <section className="bg-background py-14 sm:py-16 lg:py-20">
         <div className="mx-auto grid w-full max-w-[90rem] gap-7 px-4 sm:px-6 lg:grid-cols-[1.2fr_0.8fr] lg:px-8">
-          <EnquiryForm initialCategory={initialCategory} />
+          <EnquiryForm initialCategory={initialCategory} initialMessage={typeof params.journey==='string'?params.journey.slice(0,1500):''} />
           <aside className="rounded-xl border border-brand-teal/20 bg-brand-light-teal p-7 lg:p-8">
             <Route className="size-7 text-brand-blue" aria-hidden="true" />
             <h2 className="mt-5 text-2xl font-semibold text-brand-navy">Choose your enquiry</h2>

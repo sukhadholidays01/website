@@ -1,6 +1,7 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToastFeedback, useToast } from "@/components/notifications/ToastProvider";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import {
@@ -29,7 +30,9 @@ import "./cab-live.css";
 import { PlacePicker } from "./PlacePicker";
 import Link from "next/link";
 import type { CabCatalogue, VehicleOption } from "@/lib/cab/models";
-import { journeySchema } from "@/lib/cab/validation";
+import { journeySchema, customerSchema } from "@/lib/cab/validation";
+import { bookingPolicies } from "@/lib/cab/guest-policies";
+import { MultiDayItinerary } from "./MultiDayItinerary";
 const CabMap = dynamic(() => import("./CabMap").then((m) => m.CabMap), {
   ssr: false,
   loading: () => (
@@ -54,6 +57,8 @@ type Quote = {
   route: CabRoute | null;
   fare: CabFare;
   routingWarning: string;
+  previewRoute?: CabRoute | null;
+  previewWarning?: string;
   options: VehicleOption[];
 };
 function formatError(error: unknown) {
@@ -69,7 +74,7 @@ export function FareDetails({ fare }: { fare: CabFare }) {
             : fare.method === "manual"
               ? "Fixed route fare"
               : fare.method === "hybrid"
-                ? "Explicit hybrid estimate"
+                ? "Journey estimate"
                 : fare.method === "hourly"
                   ? "Hourly package estimate"
                   : "Distance-based estimate"}
@@ -98,10 +103,16 @@ export function FareDetails({ fare }: { fare: CabFare }) {
     </div>
   );
 }
-export function CabBookingFlow() {
+export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={}) {
   const router = useRouter();
-  const [journey, setJourney] = useState<CabJourney>(initial);
-  const [step, setStep] = useState<"journey" | "ride" | "review">("journey");
+  const { notify } = useToast();
+  const [journey, setJourney] = useState<CabJourney>(()=>{
+    const place=(value:string)=>cabPlaces.find(p=>p.label.toLowerCase()===value?.toLowerCase()||p.city.toLowerCase()===value?.toLowerCase());
+    const date=(value:string)=>/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value||'')?value:'';
+    const passengers=Number(prefill.travellers);
+    return {...initial,origin:place(prefill.from)||initial.origin,destination:place(prefill.to)||initial.destination,departure:date(prefill.departure),returnAt:prefill.tripType==='Round trip'?date(prefill.return):'',tripType:prefill.tripType==='Round trip'?'round-trip':'one-way',passengers:Number.isInteger(passengers)&&passengers>=1&&passengers<=6?passengers:initial.passengers};
+  });
+  const [step, setStep] = useState<"journey" | "ride" | "fare" | "passenger" | "payment" | "review">("journey");
   const [quote, setQuote] = useState<Quote>();
   const [searchResult, setSearchResult] = useState<Quote>();
   const [catalogue, setCatalogue] = useState<CabCatalogue>();
@@ -137,8 +148,10 @@ export function CabBookingFlow() {
     notes: "",
   });
   const [consent, setConsent] = useState(false);
+  const [privacyConsent,setPrivacyConsent]=useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  useToastFeedback(error || catalogueError);
   const heading = useRef<HTMLHeadingElement>(null);
   const request = useRef<
     { key: string; token: string; payload: string } | undefined
@@ -171,6 +184,7 @@ export function CabBookingFlow() {
       pickupAddress: "",
       dropAddress: "",
       returnAt: "",
+      itinerary: type === "multi-day" ? {stops:[{place:cabPlaces[2],overnight:false,notes:""}],requirements:""} : undefined,
     });
   }
   async function getQuote() {
@@ -182,7 +196,7 @@ export function CabBookingFlow() {
         body: { journey },
       });
       setQuote(result);
-      go("review");
+      go("fare");
     } catch (e) {
       setError(formatError(e));
     } finally {
@@ -246,12 +260,21 @@ export function CabBookingFlow() {
             journey,
             customer,
             consent,
+            consents: [
+              {id:bookingPolicies[0].id,version:bookingPolicies[0].version,accepted:consent},
+              {id:bookingPolicies[1].id,version:bookingPolicies[1].version,accepted:privacyConsent},
+            ],
             requestKey: request.current.key,
             accessToken: request.current.token,
           },
         },
       );
       const link = `/cabs/booking/${booking.id}#access=${request.current.token}`;
+      await cabApi("guest/link/exchange", {
+        method: "POST",
+        body: { reference: booking.id, token: request.current.token },
+      });
+      notify({kind:"success",title:"Booking request received",description:"Your reference is ready. The team will confirm your fare and availability."});
       router.push(link);
     } catch (e) {
       setError(formatError(e));
@@ -259,18 +282,19 @@ export function CabBookingFlow() {
       setBusy(false);
     }
   }
-  const currentStep = ["journey", "ride", "review"].indexOf(step);
+  const currentStep = ["journey", "ride", "fare", "passenger", "payment", "review"].indexOf(step);
   const airport = journey.tripType === "airport";
   const availableOptions = searchResult?.options || [];
   const activeRoute = catalogue?.routes.find((r) => r.id === journey.routeId);
+  const visualRoute = quote?.previewRoute || searchResult?.previewRoute || quote?.route || searchResult?.route;
   const packages = activeRoute?.fares[journey.vehicle]?.hourlyPackages || [];
   return (
-    <div className="cab-live">
+    <div className="cab-live cb-booking">
       <div className="cb-container">
         <header className="cb-hero">
           <div>
             <p className="cb-eyebrow">
-              <Car size={17} /> SUKHAD ROAD JOURNEYS
+              <Car size={17} /> SUKHADH HOLIDAYS / CAB JOURNEYS
             </p>
             <h1 ref={heading} tabIndex={-1}>
               Every mile.
@@ -295,10 +319,9 @@ export function CabBookingFlow() {
         <p className="cb-callout" role="status">
           {catalogue?.persistent ? (
             <>
-              <strong>Booking request, not confirmation.</strong> Your request
-              is saved securely. The team will confirm the fare and vehicle
-              availability before the ride is final. No payment is collected
-              online.
+              <strong>Booking request, not confirmation.</strong> Submit your
+              journey for review. The team will confirm the fare and vehicle
+              availability before the ride is final. Payment options follow admin confirmation.
             </>
           ) : catalogue ? (
             <>
@@ -327,7 +350,7 @@ export function CabBookingFlow() {
           </div>
         )}
         <ol className="cb-steps" aria-label="Booking progress">
-          {["Your journey", "Choose a ride", "Review & request"].map(
+          {["Journey", "Vehicle", "Fare", "Passengers", "Payment plan", "Review", "Confirmation"].map(
             (label, i) => (
               <li
                 key={label}
@@ -447,6 +470,7 @@ export function CabBookingFlow() {
                     ))}
                   </fieldset>
                 )}
+                {journey.tripType === "multi-day" && journey.itinerary && <MultiDayItinerary value={journey.itinerary} onChange={itinerary=>change({itinerary})}/>}
                 <div className="cb-location-grid">
                   <PlacePicker
                     label={
@@ -539,7 +563,7 @@ export function CabBookingFlow() {
                       onChange={(e) => change({ departure: e.target.value })}
                     />
                   </label>
-                  {journey.tripType === "round-trip" && (
+                  {["round-trip","multi-day"].includes(journey.tripType) && (
                     <label>
                       <span>Return arrival date & time · IST</span>
                       <input
@@ -576,6 +600,7 @@ export function CabBookingFlow() {
                       )}
                     </select>
                   </label>
+                  <label><span>Luggage or return/arrival instructions (optional)</span><input maxLength={200} value={journey.luggage||""} onChange={e=>change({luggage:e.target.value})}/></label>
                   {airport && (
                     <label>
                       <span>
@@ -636,6 +661,7 @@ export function CabBookingFlow() {
                     specific vehicle and luggage space.
                   </p>
                 </div>
+                {!availableOptions.length && <p className="cb-empty">No vehicle categories are available for this journey. Try another route or contact the cab team for a quote.</p>}
                 <div className="cb-vehicle-grid">
                   {availableOptions.map((v) => (
                     <label
@@ -728,15 +754,18 @@ export function CabBookingFlow() {
                 </div>
               </form>
             )}
-            {step === "review" && quote && (
+            {step === "fare" && quote && <section><div className="cb-section-top"><p className="cb-eyebrow">03 / FARE REVIEW</p><h2>A clear view of your fare.</h2><p>{journey.origin.label} → {journey.destination.label} · {journey.passengers} passengers</p></div><FareDetails fare={quote.fare}/>{quote.routingWarning && <p className="cb-callout">{quote.routingWarning}</p>}<p className="cb-note">This estimate comes from the server. Operations must issue the final quote, obtain your acceptance and confirm availability before payment. Additional stops are requests until explicitly included in the final quote.</p><div className="cb-actions"><button type="button" className="cb-btn" onClick={() => go("ride")}>Change vehicle</button><button type="button" className="cb-btn cb-primary" onClick={() => go("passenger")}>Continue to passenger details <ArrowRight size={17}/></button></div></section>}
+            {step === "passenger" && quote && (
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  void submit();
+                  const validation=customerSchema.safeParse(customer);
+                  if(!validation.success){setFieldErrors(Object.fromEntries(validation.error.issues.map(issue=>[String(issue.path[0]),issue.message])));setError("Please check the passenger details.");return;}
+                  setFieldErrors({});go("payment");
                 }}
               >
                 <div className="cb-section-top">
-                  <p className="cb-eyebrow">03 / READY FOR THE ROAD</p>
+                  <p className="cb-eyebrow">04 / PASSENGER DETAILS</p>
                   <h2>Let’s make a plan.</h2>
                   <p>
                     {catalogue?.persistent
@@ -744,47 +773,6 @@ export function CabBookingFlow() {
                       : "Your request goes to the development preview. A booking is confirmed only after you accept the final quote and the team checks availability."}
                   </p>
                 </div>
-                <dl className="cb-details">
-                  <div>
-                    <dt>Trip</dt>
-                    <dd>
-                      {tripLabels[journey.tripType]} · {journey.passengers}{" "}
-                      passengers · {journey.vehicle}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Pickup / return · IST</dt>
-                    <dd>
-                      {journey.departure.replace("T", " ")}
-                      {journey.returnAt && (
-                        <>
-                          <br />
-                          {journey.returnAt.replace("T", " ")}
-                        </>
-                      )}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Pickup</dt>
-                    <dd>
-                      {journey.origin.label}
-                      <br />
-                      {journey.pickupAddress}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Drop</dt>
-                    <dd>
-                      {journey.destination.label}
-                      <br />
-                      {journey.dropAddress}
-                    </dd>
-                  </div>
-                </dl>
-                <FareDetails fare={quote.fare} />
-                {quote.routingWarning && (
-                  <p className="cb-callout">{quote.routingWarning}</p>
-                )}
                 <div className="cb-fields">
                   <label>
                     <span>Your name</span>
@@ -842,6 +830,7 @@ export function CabBookingFlow() {
                   </label>
                 </div>
                 <p className="cb-callout">{catalogue?.bookingPolicy}</p>
+                <p className="cb-note">Passengers: {journey.passengers}. <button type="button" className="cb-text-link" onClick={() => go("journey")}>Edit journey</button> · Please do not enter identity document numbers or other unnecessary sensitive information.</p>
                 <p className="cb-note">
                   Review before submitting: {customer.name || "Your name"} ·{" "}
                   {customer.phone || "Your phone"} ·{" "}
@@ -850,28 +839,7 @@ export function CabBookingFlow() {
                     ? "The request will be stored for follow-up but is not a confirmed ride."
                     : "Development data is temporary and is not a permanent booking."}
                 </p>
-                <label className="cb-consent">
-                  <input
-                    required
-                    type="checkbox"
-                    checked={consent}
-                    onChange={(e) => setConsent(e.target.checked)}
-                  />
-                  <span>
-                    I agree to share these details with Sukhad Holidays to
-                    arrange this journey. I understand this is a request, the
-                    final quote requires my acceptance, and no online payment is
-                    being collected.
-                  </span>
-                </label>
-                <p className="cb-callout">
-                  <ShieldCheck size={20} />
-                  <span>
-                    <strong>No payment collected now.</strong> Online payments
-                    will be added later. Operations will agree payment
-                    arrangements after confirmation.
-                  </span>
-                </p>
+                {Object.entries(fieldErrors).map(([field,message])=><p key={field} className="cb-inline-error" role="alert">{message}</p>)}
                 <div className="cb-actions">
                   <button
                     type="button"
@@ -884,18 +852,88 @@ export function CabBookingFlow() {
                   </button>
                   <button
                     className="cb-btn cb-primary"
-                    disabled={busy || !consent}
+                    disabled={busy}
                   >
-                    {busy
-                      ? catalogue?.persistent
-                        ? "Saving your request…"
-                        : "Recording development request…"
-                      : "Send booking request"}
+                    Continue to payment arrangement
                     <ArrowRight size={17} />
                   </button>
                 </div>
               </form>
             )}
+            {step === "payment" && quote && <section><div className="cb-section-top"><p className="cb-eyebrow">05 / PAYMENT ARRANGEMENT</p><h2>Confirm first. Pay with clarity.</h2><p>No payment is collected when you send this request.</p></div><div className="cb-payment-plan"><ShieldCheck size={28}/><div><h3>Payment after admin confirmation</h3><p>The team will confirm your fare and vehicle availability. Any enabled full-payment, advance or pay-later options will then appear on your private booking page.</p><p>Your payment options and amount are determined by the confirmed booking policy.</p></div></div><div className="cb-actions"><button type="button" className="cb-btn" onClick={()=>go("passenger")}>Back to passengers</button><button type="button" className="cb-btn cb-primary" onClick={()=>go("review")}>Review your request <ArrowRight size={17}/></button></div></section>}
+            {step === "review" && quote && <section><div className="cb-section-top"><p className="cb-eyebrow">06 / FINAL REVIEW</p><h2>Everything in place?</h2><p>Check your journey before sending it to our cab team. A request is not a confirmed booking.</p></div>
+                <dl className="cb-details">
+                  <div>
+                    <dt>Trip</dt>
+                    <dd>
+                      {tripLabels[journey.tripType]} · {journey.passengers}{" "}
+                      passengers · {journey.vehicle}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Pickup / return · IST</dt>
+                    <dd>
+                      {journey.departure.replace("T", " ")}
+                      {journey.returnAt && (
+                        <>
+                          <br />
+                          {journey.returnAt.replace("T", " ")}
+                        </>
+                      )}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Pickup</dt>
+                    <dd>
+                      {journey.origin.label}
+                      <br />
+                      {journey.pickupAddress}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Drop</dt>
+                    <dd>
+                      {journey.destination.label}
+                      <br />
+                      {journey.dropAddress}
+                    </dd>
+                  </div>
+                </dl>
+                <FareDetails fare={quote.fare} />
+                {quote.routingWarning && (
+                  <p className="cb-callout">{quote.routingWarning}</p>
+                )}
+
+                <dl className="cb-details"><div><dt>Passenger</dt><dd>{customer.name}<br/>{customer.phone}<br/>{customer.email}</dd></div><div><dt>Special requirements</dt><dd>{customer.notes || "None added"}</dd></div></dl>
+                {journey.itinerary && <section><h3>Multi-day itinerary</h3><p>{journey.returnAt} · {quote.fare.days} day(s)</p><ol>{journey.itinerary.stops.map((stop,index)=><li key={index}>{stop.place.label}{stop.overnight?" · overnight requested":""} · {stop.notes}</li>)}</ol><p>{journey.itinerary.requirements}</p></section>}
+                <details><summary>Booking terms · {bookingPolicies[0].version}</summary><p className="cb-note">{bookingPolicies[0].text}</p></details>
+                <label className="cb-consent"><input type="checkbox" required checked={privacyConsent} onChange={e=>setPrivacyConsent(e.target.checked)}/>I acknowledge the separate privacy notice for processing this request.</label>
+                <details><summary>Privacy notice · {bookingPolicies[1].version}</summary><p className="cb-note">{bookingPolicies[1].text}</p></details>
+                <p className="cb-note">ID may be requested under the configured journey policy or by operations. Documents are uploaded only after booking through mobile-verified private access; the request itself is not rejected for an absent ID.</p>
+                <label className="cb-consent">
+                  <input
+                    required
+                    type="checkbox"
+                    checked={consent}
+                    onChange={(e) => setConsent(e.target.checked)}
+                  />
+                  <span>
+                    I accept the booking terms above and share these details to
+                    arrange this journey. I understand this is a request, the
+                    final quote requires my acceptance, and no online payment is
+                    being collected.
+                  </span>
+                </label>
+                <p className="cb-note">By submitting, you accept the <Link href="/terms" target="_blank">Terms &amp; Conditions</Link> and acknowledge the <Link href="/privacy-policy" target="_blank">Privacy Policy</Link>.</p>
+                <p className="cb-callout">
+                  <ShieldCheck size={20} />
+                  <span>
+                    <strong>No payment collected now.</strong> Enabled full, advance or pay-later options will appear on your private booking page after operations confirms your booking.
+                  </span>
+                </p>
+
+                <div className="cb-actions"><button type="button" className="cb-btn" disabled={busy} onClick={()=>go("journey")}>Edit journey</button><button type="button" className="cb-btn" disabled={busy} onClick={()=>go("passenger")}>Edit passenger details</button><button type="button" className="cb-btn cb-primary" disabled={busy||!consent||!privacyConsent} onClick={()=>void submit()}>{busy?"Saving your request...":"Send booking request"}<ArrowRight size={17}/></button></div>
+            </section>}
           </section>
           <aside className="cb-aside">
             <div className="cb-aside-heading">
@@ -905,8 +943,9 @@ export function CabBookingFlow() {
             <CabMap
               origin={journey.origin}
               destination={journey.destination}
-              route={quote?.route || searchResult?.route}
+              route={visualRoute}
             />
+            {(quote?.previewWarning || searchResult?.previewWarning) && <p className="cb-note" role="status">{quote?.previewWarning || searchResult?.previewWarning}</p>}
             <div className="cb-route-info">
               <p>
                 <MapPin size={16} />
@@ -917,16 +956,16 @@ export function CabBookingFlow() {
                 <MapPin size={16} />
                 <strong>{journey.destination.label}</strong>
               </p>
-              {quote?.route && (
+              {visualRoute && (
                 <div className="cb-route-stats">
-                  <span>{quote.route.distanceKm} km outward</span>
+                  <span>{visualRoute.distanceKm} km outward</span>
                   <span>
                     <Clock3 size={14} />
-                    {Math.floor(quote.route.durationMinutes / 60)}h{" "}
-                    {quote.route.durationMinutes % 60}m
+                    {Math.floor(visualRoute.durationMinutes / 60)}h{" "}
+                    {visualRoute.durationMinutes % 60}m
                   </span>
-                  {quote.route.returnDistanceKm !== undefined && (
-                    <span>{quote.route.returnDistanceKm} km return</span>
+                  {visualRoute.returnDistanceKm !== undefined && (
+                    <span>{visualRoute.returnDistanceKm} km return</span>
                   )}
                 </div>
               )}
@@ -942,13 +981,14 @@ export function CabBookingFlow() {
                 <li>Send your journey request</li>
                 <li>Review and accept your final quote</li>
                 <li>Receive confirmation and driver details</li>
-                <li>Travel, then settle the agreed balance</li>
+                <li>Choose an enabled payment arrangement</li>
               </ol>
             </div>
           </aside>
         </div>
         <p className="cb-footer-note">
           Your journey. A team that cares. Sukhad Holidays.
+          {" "}<Link href="/cabs/track" className="cb-text-link">Access an existing booking</Link>
         </p>
       </div>
     </div>

@@ -1,0 +1,26 @@
+{
+  "checks": [
+    {
+      "authorization": "guest pages and protected APIs rejected"
+    },
+    {
+      "dashboard": "database count verified",
+      "demoSessionRequired": false
+    },
+    {
+      "phase4": "automation at 1440/820/390, real outbox, unavailable state and retry; no worker action/provider call"
+    },
+    {
+      "dashboardError": "no fake zero totals; retry recovered"
+    },
+    {
+      "logout": "server revoked; replay rejected"
+    },
+    {
+      "expiredSession": "protected page rejected"
+    }
+  ],
+  "loginStatus": "NOT VERIFIED: bootstrap password differs from stored account password",
+  "runtimeErrors": [],
+  "noBusinessRecordsChanged": true
+}

@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
       { key: "Referrer-Policy", value: "no-referrer" },
       { key: "X-Frame-Options", value: "DENY" },
       { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
-    ] }];
+    ] }, { source: "/cabs/driver", headers: [{ key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(self)" }] }];
   },
 };
 

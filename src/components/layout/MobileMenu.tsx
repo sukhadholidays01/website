@@ -6,8 +6,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-import { CountrySelector } from "@/components/layout/CountrySelector";
-import { CurrencySelector } from "@/components/layout/CurrencySelector";
+
+
 import { cn } from "@/lib/utils";
 
 interface NavigationItem {
@@ -51,13 +51,13 @@ export function MobileMenu({ items, onLogin }: MobileMenuProps) {
       <button
         ref={menuButtonRef}
         type="button"
-        className="inline-flex size-11 items-center justify-center rounded-lg border border-border bg-white text-brand-navy transition-colors hover:bg-brand-light-teal"
+        className="inline-flex size-10 items-center justify-center rounded-lg border border-border bg-white text-brand-navy transition-colors hover:bg-brand-light-teal"
         aria-expanded={isOpen}
         aria-controls={menuId}
         aria-label={isOpen ? "Close navigation menu" : "Open navigation menu"}
         onClick={() => setIsOpen((current) => !current)}
       >
-        {isOpen ? <X className="size-5" aria-hidden="true" /> : <Menu className="size-5" aria-hidden="true" />}
+        {isOpen ? <X className="size-[18px]" aria-hidden="true" /> : <Menu className="size-[18px]" aria-hidden="true" />}
       </button>
 
       <AnimatePresence initial={false}>
@@ -97,10 +97,7 @@ export function MobileMenu({ items, onLogin }: MobileMenuProps) {
               </ul>
             </nav>
 
-            <div className="mx-auto mt-4 grid w-full max-w-[90rem] gap-3 border-t border-border pt-4 sm:grid-cols-2">
-              <CountrySelector showLabel />
-              <CurrencySelector showLabel />
-            </div>
+
             <button
               type="button"
               className="mx-auto mt-4 flex min-h-12 w-full max-w-[90rem] items-center justify-center gap-2 rounded-lg bg-brand-light-teal px-4 text-sm font-semibold text-brand-navy transition-colors hover:bg-brand-light-teal-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2"
@@ -110,7 +107,7 @@ export function MobileMenu({ items, onLogin }: MobileMenuProps) {
               }}
             >
               <UserRound className="size-4 text-brand-blue" aria-hidden="true" />
-              Login / Create Account
+              Login
             </button>
           </motion.div>
         ) : null}

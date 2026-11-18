@@ -1,9 +1,15 @@
+import { handleCommercialApi } from "@/lib/cab/commercial-api";
+import { handleAutomationApi } from '@/lib/jobs/api';
+import { advanceSummary, currentAdvance } from "@/lib/cab/commercial";
+import { cabOperationsActor } from "@/lib/cab/security";
+import { handleGuestApi, guestReadAccess, customerVisibleBooking } from "@/lib/cab/guest-api";
+import { withGuestGrant } from "@/lib/cab/guest-context";
+import { checkConfirmationRequirements, requireBookingConsent } from "@/lib/cab/guest-documents";
 import { cookies } from "next/headers";
 import {
   adminConfigured,
   cabErrorResponse,
   CabError,
-  equal,
   hasCabAdmin,
   issueAdminSession,
   limitRequest,
@@ -14,7 +20,13 @@ import {
   revokeCabSession,
   requireCabAdmin,
   requireSameOrigin,
+  requireCabPermission,
+  cabAdminRole,
+  hash,
 } from "@/lib/cab/security";
+import { authenticateAdmin } from "@/lib/auth/admin";
+import { testAdminEmail } from "@/lib/email/admin-test";
+import { requestAdminPasswordReset, confirmAdminPasswordReset, inspectAdminResetToken, resetAcknowledgement } from "@/lib/auth/password-reset";
 import { cabStorageMode, changeCabState, readCabState } from "@/lib/cab/store";
 import {
   authorizeBooking,
@@ -39,28 +51,91 @@ import {
   initiateCabPayment,
   paymentConfiguration,
   simulateCabPayment,
-  validatePreparedRazorpayCallback,
-  validatePreparedRazorpayWebhook,
 } from "@/lib/cab/payments";
 import { routingProvider } from "@/lib/cab/routing";
+import { createRazorpayOrder, verifyCheckout, razorpayWebhook, razorpayConfiguration, publicPaymentSettings, reconcileOrder, requestRefund } from "@/lib/cab/razorpay";
+import { auditCab, issueDriverAccess, authorizeDriver, updateDriverLocation, customerTracking, trackingSnapshot } from "@/lib/cab/tracking";
+import { saveVehicleImage } from "@/lib/cab/media";
+import { assertAssignment } from "@/lib/cab/assignments";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 type Context = { params: Promise<{ path: string[] }> };
 const token = (request: Request) =>
   request.headers.get("authorization")?.replace(/^Bearer /, "") || "";
-async function handle(request: Request, context: Context) {
+async function legacyHandle(request: Request, context: Context) {
   try {
     const segments = (await context.params).path;
     const route = segments.join("/");
     const method = request.method;
     if (route === "payments/razorpay/webhook" && method === "POST") {
-      validatePreparedRazorpayWebhook(
-        await readRawBody(request),
-        request.headers.get("x-razorpay-signature") || "",
-      );
+      await razorpayWebhook(await readRawBody(request), request.headers.get("x-razorpay-signature") || "", request.headers.get("x-razorpay-event-id") || "");
+      await processCabEmails().catch(() => {});
+      return privateJson({ received: true });
     }
     if (method !== "GET") requireSameOrigin(request);
+    const automation=await handleAutomationApi(request,segments);if(automation)return automation;
+    if (route === "admin/email-test" && method === "POST") {
+      const role = await requireCabPermission("settings");
+      await limitRequest(request, "admin-email-test", 3, 15 * 60000);
+      return privateJson(await testAdminEmail(await readBody(request), role));
+    }
+    if (route === "password-reset/validate" && method === "POST") {
+      await limitRequest(request, "admin-reset-validate", 15, 15 * 60000);
+      return privateJson(await inspectAdminResetToken(await readBody(request)));
+    }
+    if (route === "password-reset/request" && method === "POST") {
+      await limitRequest(request, "admin-reset-request", 3, 15 * 60000);
+      await requestAdminPasswordReset(await readBody(request));
+      return privateJson({ message: resetAcknowledgement });
+    }
+    if (route === "password-reset/confirm" && method === "POST") {
+      await limitRequest(request, "admin-reset-confirm", 8, 15 * 60000);
+      await confirmAdminPasswordReset(await readBody(request));
+      return privateJson({ message: "Password updated. Sign in with your new password." });
+    }
+    if (route === "driver/session") {
+      await limitRequest(request, "driver-session", 12);
+      const cookieStore = await cookies();
+      if (method === "POST") {
+        const body = await readBody(request);
+        const access = typeof body.token === "string" && /^[a-f0-9]{64}$/.test(body.token) ? body.token : "";
+        authorizeDriver(await readCabState(), access);
+        cookieStore.set("cab_driver_session", access, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict", path: "/", maxAge: 24 * 3600 });
+        return privateJson({ authenticated: true });
+      }
+      const access = cookieStore.get("cab_driver_session")?.value || "";
+      if (method === "DELETE") {
+        await changeCabState(state => { const session = state.driverSessions?.[hash(access)]; if (session) session.revoked = true; });
+        cookieStore.delete("cab_driver_session"); return privateJson({ authenticated: false });
+      }
+      if (method === "GET") {
+        const { booking } = authorizeDriver(await readCabState(), access);
+        return privateJson({ booking: { id: booking.id, status: booking.status, origin: booking.journey.origin.label, destination: booking.journey.destination.label, departure: booking.journey.departure } });
+      }
+    }
+    if (route === "driver/location" && method === "POST") {
+      await limitRequest(request, "driver-location", 12);
+      return privateJson(await updateDriverLocation((await cookies()).get("cab_driver_session")?.value || "", await readBody(request)));
+    }
+    if (route === "driver/on-way" && method === "POST") {
+      await limitRequest(request, "driver-on-way", 6);
+      const access = (await cookies()).get("cab_driver_session")?.value || "";
+      const body = await readBody(request);
+      if (typeof body.bookingId !== "string" || body.bookingId.length > 80) throw new CabError("Choose an assigned booking.");
+      await changeCabState(state => {
+        const { booking } = authorizeDriver(state, access, body.bookingId);
+        if (booking.status !== "ASSIGNED" || !booking.assignment) throw new CabError("This trip is not awaiting pickup.", 409);
+        if (booking.assignment.onWayAt) return;
+        booking.assignment.onWayAt = new Date().toISOString(); booking.updatedAt = booking.assignment.onWayAt;
+        booking.history.push({ at: booking.updatedAt, actor: "driver", message: "Driver is on the way to pickup." });
+        auditCab(state, "DRIVER", "Driver on the way to pickup", booking.id);
+      }); return privateJson({ saved: true });
+    }
+    if (segments[0] === "tracking" && segments.length === 2 && method === "GET") {
+      await limitRequest(request, "tracking", 30);
+      return privateJson(await customerTracking(segments[1], token(request)));
+    }
     if (route === "catalogue" && method === "GET")
       return privateJson(await publicCatalogue());
     if (route === "search" && method === "POST") {
@@ -71,7 +146,20 @@ async function handle(request: Request, context: Context) {
     }
     if (route === "payments/razorpay/verify" && method === "POST") {
       await limitRequest(request, "gateway-verify", 15);
-      validatePreparedRazorpayCallback(await readBody(request));
+      const attempt = await verifyCheckout(await readBody(request), token(request));
+      await processCabEmails().catch(() => {});
+      return privateJson({ attempt });
+    }
+    if (segments[0] === "payments" && segments[1] === "bookings" && segments[3] === "pay-later" && segments.length === 4 && method === "POST") {
+      await limitRequest(request, "payment-choice", 10);
+      await changeCabState(state => {
+        const b = getBooking(state, segments[2]); authorizeBooking(b, token(request));
+        if (!publicPaymentSettings(state.operations.settings).payLater || !["CONFIRMED", "ASSIGNED", "IN_PROGRESS"].includes(b.status)) throw new CabError("Pay later is not permitted for this booking.", 409);
+        if (state.operations.paymentAttempts.some(a => a.bookingId === b.id && ["CREATING", "PENDING", "FAILED", "RECONCILIATION_REQUIRED"].includes(a.status))) throw new CabError("Resolve the current payment order first.", 409);
+        b.fare.paymentChoice = "pay-later"; b.updatedAt = new Date().toISOString(); b.history.push({ at: b.updatedAt, actor: "customer", message: "Customer selected the enabled pay-later option. Balance remains due." });
+        auditCab(state, "CUSTOMER", "Selected pay later", b.id);
+      });
+      return privateJson({ saved: true });
     }
     if (
       segments[0] === "payments" &&
@@ -82,21 +170,25 @@ async function handle(request: Request, context: Context) {
       await limitRequest(request, "payments", 15);
       if (method === "GET") {
         const state = await readCabState();
-        authorizeBooking(getBooking(state, id), token(request));
+        const b=getBooking(state,id);authorizeBooking(b, token(request));
         return privateJson({
           attempts: state.operations.paymentAttempts.filter(
             (p) => p.bookingId === id,
           ),
-          configuration: paymentConfiguration(),
+          configuration: razorpayConfiguration(),
+          policy: {...publicPaymentSettings(state.operations.settings),...(b.commercial?{advance:Boolean(currentAdvance(b)?.requestedAt),advanceType:currentAdvance(b)?.mode||"fixed",advanceValue:currentAdvance(b)?.value||0}:{})},
+          advance: advanceSummary(b,state),
+          balance: (await import("@/lib/cab/types")).cabBalance(getBooking(state, id)),
         });
       }
       const body = await readBody(request);
-      if (method === "POST")
-        return privateJson(
-          { attempt: await initiateCabPayment(id, token(request)) },
-          201,
-        );
+      if (method === "POST") {
+        if (razorpayConfiguration().enabled) return privateJson(await createRazorpayOrder(id, token(request), body), 201);
+        if (process.env.NODE_ENV !== "production" && cabStorageMode() === "development-mock") return privateJson({ attempt: await initiateCabPayment(id, token(request)) }, 201);
+        throw new CabError("Online payment is not configured. Contact operations; no order was created.", 503);
+      }
       if (method === "PATCH") {
+        if (process.env.NODE_ENV === "production" || cabStorageMode() !== "development-mock") throw new CabError("Payment simulation is restricted to the in-memory development repository.", 403);
         const attempt = await simulateCabPayment(id, token(request), body);
         await processCabEmails();
         return privateJson({ attempt });
@@ -105,6 +197,7 @@ async function handle(request: Request, context: Context) {
     if (route === "session" && method === "GET") {
       return privateJson({
         authenticated: await hasCabAdmin(),
+        role: await hasCabAdmin() ? await cabAdminRole() : null,
         configured: adminConfigured(),
         storage: cabStorageMode(),
       });
@@ -112,18 +205,14 @@ async function handle(request: Request, context: Context) {
     if (route === "session" && method === "POST") {
       if (!adminConfigured())
         throw new CabError(
-          "Cab operations access is not configured. Follow docs/cab-booking.md to set the server password and secret.",
+          "Admin sign-in is temporarily unavailable. Please contact support.",
           503,
         );
       await limitRequest(request, "login", 8, 15 * 60000);
       const body = await readBody(request);
-      if (
-        typeof body.password !== "string" ||
-        !equal(body.password, process.env.CAB_ADMIN_PASSWORD!)
-      )
-        throw new CabError("Incorrect operations password.", 401);
-      const session = issueAdminSession();
-      await registerCabSession(session);
+      const account = await authenticateAdmin(body);
+      const session = issueAdminSession(account.role);
+      await registerCabSession(session, account.id);
       (await cookies()).set("cab_ops_session", session, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -131,7 +220,7 @@ async function handle(request: Request, context: Context) {
         path: "/",
         maxAge: 8 * 3600,
       });
-      return privateJson({ authenticated: true });
+      return privateJson({ authenticated: true, role: account.role });
     }
     if (route === "session" && method === "DELETE") {
       await revokeCabSession(
@@ -174,12 +263,13 @@ async function handle(request: Request, context: Context) {
       if (method === "GET") {
         await limitRequest(request, "booking-lookup", 30);
         const b = getBooking(await readCabState(), id);
-        authorizeBooking(b, token(request));
-        return privateJson({ booking: publicBooking(b) });
+        authorizeBooking(b, token(request), false);
+        return privateJson({ booking: customerVisibleBooking(b, await guestReadAccess(request,id)) });
       }
       if (method === "PATCH") {
         await limitRequest(request, "customer-actions", 15);
         const body = await readBody(request);
+        if (body.action === "accept") await requireBookingConsent(id);
         const booking = await customerAction(
           id,
           token(request),
@@ -192,6 +282,48 @@ async function handle(request: Request, context: Context) {
     }
     if (segments[0] === "admin") {
       await requireCabAdmin();
+      const role = await requireCabPermission(method === "GET" || segments[1] === "bookings" ? "read" : segments[1] === "payments" ? "finance" : ["driver-access", "resend-email", "resolve-route", "preview-fare", "preview-assignment"].includes(segments[1]) ? "dispatch" : "settings");
+      if (method !== "GET") await limitRequest(request, "admin-mutation", 30);
+      if (route === "admin/upload-image" && method === "POST") {
+        const result = await saveVehicleImage(request);
+        await changeCabState(state => auditCab(state, role, "Uploaded vehicle image", result.url));
+        return privateJson(result, 201);
+      }
+      if (route === "admin/preview-assignment" && method === "POST") {
+        const input = await readBody(request);
+        if (typeof input.bookingId !== "string" || typeof input.driverId !== "string" || typeof input.vehicleId !== "string" || [input.bookingId, input.driverId, input.vehicleId].some(v => v.length > 100)) throw new CabError("Choose a booking, driver and vehicle.");
+        const state = await readCabState(), b = getBooking(state, input.bookingId);
+        if (!["CONFIRMED", "ASSIGNED"].includes(b.status)) throw new CabError("Confirm this booking before assigning a ride.", 409);
+        try { return privateJson({ assignment: assertAssignment(state, b, input.driverId, input.vehicleId) }); } catch(e) { throw new CabError((e as Error).message, 409); }
+      }
+      if (route === "admin/process-emails" && method === "POST") {
+        await processCabEmails(); return privateJson({ processed: true, message:'Eligible messages were queued for the worker or recorded as previews. This is not delivery confirmation.' });
+      }
+      if (route === "admin/tracking" && method === "GET") {
+        const state = await readCabState();
+        return privateJson({ trips: state.bookings.filter(b => ["ASSIGNED", "IN_PROGRESS"].includes(b.status)).map(b => ({ booking: publicBooking(b), tracking: trackingSnapshot(state, b.id) })) });
+      }
+      if (segments[1] === "driver-access" && segments.length === 3 && method === "POST") {
+        await requireCabPermission("dispatch");
+        return privateJson(await issueDriverAccess(segments[2], role), 201);
+      }
+      if (segments[1] === "payments" && segments.length === 4 && method === "POST") {
+        if (segments[3] === "reconcile") return privateJson(await reconcileOrder(segments[2], role));
+        if (segments[3] === "refund") { const result = await requestRefund(segments[2], role, await readBody(request)); await processCabEmails().catch(() => {}); return privateJson(result); }
+      }
+      if (segments[1] === "resend-email" && segments.length === 3 && method === "POST") {
+        await requireCabPermission("dispatch");
+        await changeCabState(state => {
+          const b = getBooking(state, segments[2]);
+          if(state.operations.notifications.some(n=>n.bookingId===b.id&&(n.status==='sending'||n.status==='uncertain'||(n.status==='failed'&&n.error?.includes('not confirmed')))))throw new CabError('Review the uncertain submission with the email provider before requesting another message.',409);
+          b.updatedAt = new Date().toISOString();
+          // Reuse the existing outbox; never reset ambiguous SMTP outcomes.
+          auditCab(state, role, "Requested booking email resend", b.id);
+        });
+        const { queueCabEmail } = await import("@/lib/cab/notifications");
+        await changeCabState(state => { const b = getBooking(state, segments[2]); queueCabEmail(state, b, ["REQUESTED", "QUOTED", "ACCEPTED"].includes(b.status) ? "status" : "confirmation"); });
+        await processCabEmails().catch(() => {}); return privateJson({ queued: true });
+      }
       if (route === "admin/resolve-route" && method === "POST")
         return privateJson({
           route: await resolveManagedRoute(await readBody(request)),
@@ -205,6 +337,7 @@ async function handle(request: Request, context: Context) {
           operations: await saveOperationalEntity(
             segments[2],
             await readBody(request),
+            (await cabOperationsActor("settings")).userId,
           ),
         });
       if (route === "admin" && method === "GET") {
@@ -215,9 +348,12 @@ async function handle(request: Request, context: Context) {
           storage: cabStorageMode(),
           asOf: Date.now(),
           operations: state.operations,
+          role,
+          audit: state.audit || [],
+          refunds: state.refunds || [],
           integrations: {
             email: emailConfiguration(),
-            payments: paymentConfiguration(),
+            payments: { ...paymentConfiguration(), ...razorpayConfiguration() },
             routing: {
               provider: routingProvider().name,
               configured:
@@ -247,6 +383,7 @@ async function handle(request: Request, context: Context) {
             if (ids.size !== config.manual.length)
               throw new CabError("Fare identifiers must be unique.");
             state.config = { ...config, revision: config.revision + 1 };
+            auditCab(state, role, "Updated fare configuration", "cab_config");
             return state.config;
           }),
         });
@@ -256,11 +393,16 @@ async function handle(request: Request, context: Context) {
         segments.length === 3 &&
         method === "PATCH"
       ) {
+        const input = await readBody(request);
+        if (input.action === "confirm") await checkConfirmationRequirements(segments[2]);
+        await requireCabPermission(input.action === "payment" ? "finance" : "dispatch");
+        const actor=await cabOperationsActor(input.action==="payment"?"finance":"dispatch");
         const booking = await operateBooking(
           segments[2],
-          await readBody(request),
+          input,
+          actor.role,actor.userId,
         );
-        await processCabEmails();
+        await processCabEmails().catch(() => {});
         return privateJson({ booking });
       }
     }
@@ -268,6 +410,18 @@ async function handle(request: Request, context: Context) {
   } catch (error) {
     return cabErrorResponse(error);
   }
+}
+async function handle(request:Request,context:Context) {
+  try {
+    const parts=(await context.params).path,route=parts.join('/');
+    if(request.method!=='GET'&&route!=='payments/razorpay/webhook')requireSameOrigin(request);
+    const commercial=await handleCommercialApi(request,parts);if(commercial)return commercial;
+    const guest=await handleGuestApi(request,parts);if(guest)return guest;
+    const id=parts[0]==='tracking'&&parts.length===2?parts[1]:parts[0]==='bookings'&&parts.length===2?parts[1]:parts[0]==='payments'&&parts[1]==='bookings'?parts[2]:undefined;
+    if(id){const sensitive=!(request.method==='GET'&&['tracking','bookings'].includes(parts[0]));const assurance=await guestReadAccess(request,id,sensitive);return await withGuestGrant(id,assurance,()=>legacyHandle(request,context));}
+    if(route==='payments/razorpay/verify'){const body=await readBody(request.clone());const assurance=await guestReadAccess(request,String(body.bookingId||''),true);return await withGuestGrant(body.bookingId,assurance,()=>legacyHandle(request,context));}
+    return await legacyHandle(request,context);
+  } catch(error){return cabErrorResponse(error);}
 }
 export const GET = handle;
 export const POST = handle;

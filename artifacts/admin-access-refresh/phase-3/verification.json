@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "checks": [
+    {
+      "guestRequest": true,
+      "requestStatus": "REQUESTED",
+      "privateLinkExchanged": true,
+      "fragmentRemoved": true,
+      "sensitiveDetailsBlocked": true
+    },
+    {
+      "quotationPreview": true,
+      "quotationSent": true,
+      "customerAcceptance": true,
+      "adminConfirmation": true,
+      "advanceDisplay": true,
+      "verifiedGuestSession": "isolated OTP-assurance fixture; delivery not tested",
+      "globalPolicyChanged": false,
+      "realPaymentInitiated": false
+    }
+  ],
+  "runtimeErrors": [],
+  "isolatedBookingCreatedAndCleaned": true,
+  "realMessagesSent": false
+}

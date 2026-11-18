@@ -1,0 +1,77 @@
+{
+  "passed": true,
+  "checks": [
+    {
+      "width": 1440,
+      "overflow": false,
+      "mobileMenu": false,
+      "modal": true,
+      "booking": true,
+      "footer": true
+    },
+    {
+      "width": 1280,
+      "overflow": false,
+      "mobileMenu": false,
+      "modal": true,
+      "booking": true,
+      "footer": true
+    },
+    {
+      "width": 1024,
+      "overflow": false,
+      "mobileMenu": true,
+      "modal": true,
+      "booking": true,
+      "footer": true
+    },
+    {
+      "width": 768,
+      "overflow": false,
+      "mobileMenu": true,
+      "modal": true,
+      "booking": true,
+      "footer": true
+    },
+    {
+      "width": 390,
+      "overflow": false,
+      "mobileMenu": true,
+      "modal": true,
+      "booking": true,
+      "footer": true
+    },
+    {
+      "width": 360,
+      "overflow": false,
+      "mobileMenu": true,
+      "modal": true,
+      "booking": true,
+      "footer": true
+    },
+    {
+      "accountUnavailableHonest": true,
+      "outsideDismiss": true
+    },
+    {
+      "region": true,
+      "carousel": true,
+      "categories": 15,
+      "demoPromotionsRemoved": true
+    },
+    {
+      "localLinks": 58
+    },
+    {
+      "searchValidation": true,
+      "topRightToast": true,
+      "flightEnquiry": true,
+      "busEnquiry": true,
+      "holidayEnquiry": true,
+      "cabPrefill": true,
+      "bookingSubmitted": false
+    }
+  ],
+  "runtimeErrors": [],
+  "noBookingOrEnquirySent": true
+}

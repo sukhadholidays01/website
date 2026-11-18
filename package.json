@@ -8,6 +8,9 @@
     "npm": ">=10"
   },
   "scripts": {
+    "worker:once": "node scripts/run-worker.mjs",
+    "worker:run": "node scripts/run-worker.mjs --loop",
+    "test:automation": "node scripts/check-phase4-automation.mjs",
     "dev": "next dev",
     "build": "next build --webpack",
     "start": "next start",
@@ -15,6 +18,9 @@
     "typecheck": "tsc --noEmit",
     "db:migrate": "node scripts/db-migrate.mjs",
     "test:cabs": "node scripts/check-cab-system.mjs",
+    "test:cab-enhancements": "node scripts/check-cab-enhancements.mjs",
+    "test:cab-persistence": "node scripts/check-cab-persistence.mjs",
+    "test:cab-production-smoke": "node scripts/check-cab-production-smoke.mjs",
     "db:review": "node scripts/db-migrate.mjs --review",
     "db:verify": "node scripts/db-verify.mjs",
     "test:cab-mysql": "node scripts/check-cab-mysql.mjs",
@@ -32,6 +38,7 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-hook-form": "^7.89.0",
+    "react-icons": "^5.7.0",
     "server-only": "^0.0.1",
     "zod": "^4.6.6"
   },

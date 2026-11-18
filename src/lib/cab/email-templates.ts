@@ -10,6 +10,34 @@ export const escapeEmail = (value: unknown) =>
       ]!,
   );
 const titles: Record<EmailKind, string> = {
+  'quote-expired':'Your cab quotation has expired — request a revised quotation',
+  'admin-quote-expired':'Cab quotation expired without acceptance',
+  'journey-reminder':'Reminder of your upcoming cab journey',
+  "access-link": "Your private cab tracking link",
+  "initial-access-link": "Your private cab tracking link",
+  "flight-enquiry": "New flight enquiry",
+  "holiday-enquiry": "New holiday package enquiry",
+  "custom-trip-enquiry": "New customised trip enquiry",
+  "email-failure": "Email service alert",
+  "system-event": "Travel operations update",
+  "admin-upcoming":"Upcoming cab requires operational action",
+  "admin-fleet-alert":"Assigned fleet requires review",
+  "admin-id-review":"Private ID review requires attention",
+  "id-status":"Your booking identity review update",
+  "advance-requested":"Your cab advance payment request",
+  "quote-expiring":"Your cab quotation is expiring",
+  "admin-accepted":"Customer accepted quotation",
+  "admin-payment":"Verified cab payment received",
+  "admin-payment-failure":"Cab payment needs review",
+  "assignment-conflict":"Cab assignment requires attention",
+  "id-review":"Cab ID document review update",
+  quote: "Your cab quote is ready",
+  accepted: "Your quote acceptance is received",
+  started: "Your cab trip has started",
+  completed: "Your cab trip is complete",
+  cancelled: "Your cab booking is cancelled",
+  "driver-assignment": "A cab journey has been assigned to you",
+  refund: "Your refund update",
   request: "Your cab request is received",
   confirmation: "Your cab booking is confirmed",
   status: "Your journey status has changed",
@@ -19,7 +47,7 @@ const titles: Record<EmailKind, string> = {
   "admin-request": "New cab booking request",
 };
 export function renderCabEmail(kind: EmailKind, booking: CabBooking) {
-  const title = titles[kind];
+  const title = kind==="quote"&&(booking.commercial?.quotations.length||0)>1?"Your cab quotation has been revised":titles[kind];
   const text = [
     `Sukhadh Holidays — ${title}`,
     booking.development
@@ -40,6 +68,9 @@ export function renderCabEmail(kind: EmailKind, booking: CabBooking) {
     ...booking.fare.lines.map(
       (line) => `${line.label}: ${cabMoney(line.amount)}`,
     ),
+    ...(booking.commercial?.advances.at(-1)?[`Requested advance: ${cabMoney(booking.commercial.advances.at(-1)!.amount)}. Open your private booking and verify your mobile to review and pay.`]:[]),
+    ...(booking.commercial?.quotations.at(-1)?["Quotation version: "+booking.commercial.quotations.at(-1)!.number,"Valid until: "+booking.commercial.quotations.at(-1)!.expiresAt,booking.commercial.quotations.at(-1)!.notes]:[]),
+    ...(kind==="status"?[booking.commercial?.notes.filter(n=>n.customerVisible).at(-1)?.text||""]:[]),
     `Includes: ${booking.fare.inclusions}`,
     `Excludes: ${booking.fare.exclusions}`,
     kind === "assignment" && booking.assignment

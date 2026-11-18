@@ -9,9 +9,10 @@ import { cn } from "@/lib/utils";
 interface CountrySelectorProps {
   className?: string;
   showLabel?: boolean;
+  iconOnly?: boolean;
 }
 
-export function CountrySelector({ className, showLabel = false }: CountrySelectorProps) {
+export function CountrySelector({ className, showLabel = false, iconOnly = false }: CountrySelectorProps) {
   const id = useId();
   const [country, setCountry] = useState<(typeof siteConfig.countries)[number]>("India");
 
@@ -25,16 +26,16 @@ export function CountrySelector({ className, showLabel = false }: CountrySelecto
         <label htmlFor={id} className="sr-only">Country preference</label>
       )}
       <div className="relative">
-        <Globe2 className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-brand-blue" aria-hidden="true" />
+        <Globe2 className={cn("pointer-events-none absolute top-1/2 size-4 -translate-y-1/2 text-brand-blue",iconOnly?"left-3":"left-2.5")} aria-hidden="true" />
         <select
           id={id}
           value={country}
           onChange={(event) => setCountry(event.target.value as (typeof siteConfig.countries)[number])}
-          className="min-h-10 w-full appearance-none rounded-lg border border-border bg-white py-2 pl-9 pr-7 text-sm font-medium text-brand-navy outline-none transition-colors hover:bg-brand-light-teal focus:border-brand-teal focus:ring-2 focus:ring-brand-light-teal"
+          className={cn("w-full appearance-none rounded-lg border border-border bg-white font-medium outline-none transition-colors hover:bg-brand-light-teal focus:border-brand-teal focus:ring-2 focus:ring-brand-light-teal",iconOnly?"h-10 cursor-pointer px-0 !text-transparent":"min-h-9 py-2 pl-8 pr-3 text-xs text-brand-navy")}
           aria-label={showLabel ? undefined : "Country preference"}
         >
           {siteConfig.countries.map((option) => (
-            <option key={option} value={option}>{option}</option>
+            <option className="!text-brand-navy" key={option} value={option}>{option}</option>
           ))}
         </select>
       </div>

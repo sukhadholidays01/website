@@ -28,6 +28,7 @@ export interface FarePolicy {
   exclusions: string;
 }
 export interface ManagedRoute {
+  geometry?: [number, number][];
   id: string;
   name: string;
   origin: CabPlace;
@@ -48,6 +49,7 @@ export interface ManagedRoute {
   development: boolean;
 }
 export interface ManagedVehicle {
+  airConditioning?: "ac" | "non-ac" | "unspecified";
   id: string;
   category: CabVehicle;
   name: string;
@@ -64,6 +66,9 @@ export interface ManagedVehicle {
   development: boolean;
 }
 export interface ManagedDriver {
+  email?: string;
+  license?: string;
+  licenseExpiry?: string;
   id: string;
   name: string;
   phone: string;
@@ -74,20 +79,24 @@ export interface ManagedDriver {
   development: boolean;
 }
 export interface CabSettings {
+  advancePolicy?: import("./commercial-types").AdvancePolicy;
+  payments?: { full: boolean; advance: boolean; advanceType: "fixed" | "percent"; advanceValue: number; payLater: boolean };
+  cancellationPolicy?: string;
   enabledTripTypes: CabTripType[];
   fixedAdditionalCharge: number;
   bookingPolicy: string;
   assignmentBufferMinutes: number;
-  notifications: { customer: boolean; admin: boolean };
+  notifications: { customer: boolean; admin: boolean; driver?: boolean };
   mockPaymentsEnabled: boolean;
 }
 export interface PaymentAttempt {
+  context?: import("./commercial-types").PaymentContext;
   id: string;
   bookingId: string;
   amount: number;
   amountPaise: number;
   currency: "INR";
-  status: "PENDING" | "SUCCESSFUL" | "FAILED" | "REFUNDED";
+  status: "CREATING" | "RECONCILIATION_REQUIRED" | "PENDING" | "SUCCESSFUL" | "FAILED" | "REFUNDED";
   provider: "mock" | "razorpay";
   orderId: string;
   paymentId?: string;
@@ -96,6 +105,12 @@ export interface PaymentAttempt {
   eventIds: string[];
 }
 export type EmailKind =
+  | "quote-expired" | "admin-quote-expired" | "journey-reminder"
+  | "admin-upcoming" | "admin-fleet-alert" | "admin-id-review" | "id-status" | "advance-requested" | "quote-expiring" | "admin-accepted" | "admin-payment" | "admin-payment-failure" | "assignment-conflict" | "id-review"
+  | "access-link"
+  | "initial-access-link"
+    | "flight-enquiry" | "holiday-enquiry" | "custom-trip-enquiry" | "email-failure" | "system-event"
+  | "quote" | "accepted" | "started" | "completed" | "cancelled" | "driver-assignment" | "refund"
   | "request"
   | "confirmation"
   | "status"
@@ -107,8 +122,8 @@ export interface NotificationLog {
   id: string;
   bookingId: string;
   kind: EmailKind;
-  audience: "customer" | "admin";
-  status: "queued" | "preview" | "sending" | "sent" | "failed";
+  audience: "customer" | "admin" | "driver";
+  status: "queued" | "preview" | "sending" | "sent" | "failed" | "uncertain";
   attempts: number;
   createdAt: string;
   dedupeKey: string;

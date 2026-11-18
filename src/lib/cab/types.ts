@@ -1,5 +1,5 @@
 export type CabTripType =
-  "one-way" | "round-trip" | "airport" | "local" | "custom";
+  "one-way" | "round-trip" | "airport" | "local" | "custom" | "multi-day";
 export type CabVehicle =
   "hatchback" | "sedan" | "suv" | "premium-mpv" | "luxury" | "tempo-traveller";
 export type CabStatus =
@@ -34,6 +34,8 @@ export interface CabJourney {
   routeId?: string;
   packageId?: string;
   durationHours?: number;
+  luggage?: string;
+  itinerary?: { stops: { place: CabPlace; overnight: boolean; notes: string }[]; dailyDistanceKm?: number; requirements: string };
 }
 export interface CabRoute {
   distanceKm: number;
@@ -45,6 +47,7 @@ export interface CabRoute {
   returnDurationMinutes?: number;
 }
 export interface CabFare {
+  paymentChoice?: "pay-later";
   method: "manual" | "automatic" | "hybrid" | "hourly" | "quote";
   total: number | null;
   distanceKm: number | null;
@@ -98,12 +101,15 @@ export interface CabPayment {
 }
 export interface CabEvent {
   at: string;
-  actor: "customer" | "operations";
+  actor: "customer" | "operations" | "driver";
   message: string;
   statusFrom?: CabStatus;
   statusTo?: CabStatus;
 }
 export interface CabBooking {
+  commercial?: import("./commercial-types").CommercialState;
+  policyAcceptances?: import("./guest-policies").PolicyAcceptance[];
+  documentPolicy?: import("./guest-policy").GuestDocumentPolicy;
   id: string;
   customerId?: string;
   accessHash: string;
@@ -118,6 +124,7 @@ export interface CabBooking {
   acceptedVersion?: string;
   customer: { name: string; phone: string; email: string; notes: string };
   assignment?: {
+    onWayAt?: string;
     driver: string;
     phone: string;
     vehicle: string;
@@ -130,9 +137,13 @@ export interface CabBooking {
 }
 export type PublicCabBooking = Omit<
   CabBooking,
-  "accessHash" | "requestKey" | "requestHash" | "customerId"
+  "accessHash" | "requestKey" | "requestHash" | "customerId" | "policyAcceptances" | "documentPolicy" | "commercial"
 >;
 export interface CabState {
+  driverSessions?: Record<string, { bookingId: string; driverId: string; expiresAt: string; revoked: boolean }>;
+  locations?: Record<string, { driverId: string; lat: number; lon: number; accuracy: number; at: string }>;
+  audit?: { id: string; role: string; action: string; entityId: string; at: string }[];
+  refunds?: { id: string; attemptId: string; providerId?: string; status: string; amountPaise: number; reason: string; at: string }[];
   config: CabConfig;
   bookings: CabBooking[];
   limits: Record<string, { count: number; until: number }>;
@@ -166,6 +177,7 @@ export const cabVehicles: {
   },
 ];
 export const tripLabels: Record<CabTripType, string> = {
+  "multi-day": "Multi-day travel",
   "one-way": "One-way",
   "round-trip": "Round-trip",
   airport: "Airport transfer",

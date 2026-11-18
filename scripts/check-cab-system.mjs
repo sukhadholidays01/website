@@ -60,6 +60,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const port = Number(process.env.CAB_TEST_PORT || 3116),
   origin = `http://127.0.0.1:${port}`;
 const password = randomBytes(24).toString("hex"),
+  readOnlyPassword = randomBytes(24).toString("hex"),
   gatewaySecret = randomBytes(32).toString("hex"),
   webhookSecret = randomBytes(32).toString("hex");
 let cookie = "",
@@ -384,6 +385,10 @@ try {
     "Provider-independent routing: Mapbox contract, valid coordinates, no-route and timeout handling with no guessed distance",
   );
 
+  if (process.argv.includes("--unit-only")) {
+    console.log("PASS cab domain unit checks only; no server, provider request or real booking created.");
+    process.exit(0);
+  }
   child = spawn(
     process.execPath,
     [
@@ -401,6 +406,7 @@ try {
         ...process.env,
         CAB_STORAGE_MODE: "memory",
         CAB_ADMIN_PASSWORD: password,
+        CAB_READONLY_PASSWORD: readOnlyPassword,
         CAB_SESSION_SECRET: randomBytes(48).toString("hex"),
         CAB_SITE_ORIGIN: origin,
         CAB_ALLOW_LOCAL_STORAGE: "true",
@@ -439,7 +445,7 @@ try {
       admin = false,
       status = 200,
       headers = {},
-      ip = "127.0.0." + ipSequence,
+      ip = "127.0.0." + ipSequence++,
     } = {},
   ) {
     const response = await fetch(origin + "/api/cab/" + endpoint, {
@@ -481,6 +487,14 @@ try {
   assert.equal(admin.storage, "development-mock");
   assert.equal(admin.config.manual.length, 51);
   assert.equal(admin.integrations.email.mode, "preview");
+  const viewerLogin = await api("session", { method: "POST", body: { password: readOnlyPassword } });
+  const viewerCookie = viewerLogin.response.headers.get("set-cookie").split(";")[0];
+  assert.equal((await api("admin", { headers: { Cookie: viewerCookie } })).value.role, "VIEWER");
+  await api("admin/config", { method: "PUT", headers: { Cookie: viewerCookie }, body: admin.config, status: 403 });
+  await api("admin", { headers: { Cookie: viewerCookie.replace("VIEWER", "OWNER") }, status: 401 });
+  await api("session", { method: "DELETE", headers: { Cookie: viewerCookie } });
+  await api("admin", { headers: { Cookie: viewerCookie }, status: 401 });
+  pass("Server role permissions, signed-role tampering rejection and revoked cookie replay rejection");
   pass(
     "Authenticated admin APIs, origin protection, HttpOnly sessions and operation without PostgreSQL credentials",
   );
@@ -602,6 +616,24 @@ try {
     driverId: "demo-driver-1",
     vehicleId: "demo-vehicle-0",
   });
+  await api("admin/tracking", { status: 401 });
+  await api("tracking/" + one.booking.id, { status: 403 });
+  const driverAccess = (await api("admin/driver-access/" + one.booking.id, { method: "POST", body: {}, admin: true, status: 201 })).value;
+  const driverLogin = await api("driver/session", { method: "POST", body: { token: driverAccess.token } });
+  const driverCookie = driverLogin.response.headers.get("set-cookie").split(";")[0];
+  const gps = { bookingId: one.booking.id, lat: 26.7, lon: 82.1, accuracy: 12 };
+  await api("driver/location", { method: "POST", body: gps, status: 401 });
+  await api("driver/location", { method: "POST", headers: { Cookie: driverCookie }, body: { ...gps, lat: 91 }, status: 400 });
+  await api("driver/location", { method: "POST", headers: { Cookie: driverCookie }, body: { ...gps, bookingId: two.booking.id }, status: 401 });
+  await api("driver/location", { method: "POST", headers: { Cookie: driverCookie }, body: gps });
+  await api("driver/on-way", { method: "POST", headers: { Cookie: driverCookie }, body: { bookingId: one.booking.id } });
+  const tracked = (await api("tracking/" + one.booking.id, { token: one.token })).value;
+  assert.equal(tracked.location.lat, gps.lat);
+  assert.equal(tracked.stale, false);
+  assert(tracked.timeline.some(event => event.actor === "driver"));
+  await api("driver/session", { method: "DELETE", headers: { Cookie: driverCookie } });
+  await api("driver/location", { method: "POST", headers: { Cookie: driverCookie }, body: gps, status: 401 });
+  pass("HTTP driver credential exchange, assignment isolation, GPS validation, customer/admin tracking access, on-way history and driver revocation");
   await op(
     two,
     {
@@ -710,12 +742,12 @@ try {
       paymentId: "payment_fixture",
       signature: "invalid",
     },
-    status: 401,
+    status: 400,
   });
   await api("payments/razorpay/verify", {
     method: "POST",
-    body: { orderId: "order_fixture", paymentId: "payment_fixture", signature },
-    status: 503,
+    body: { bookingId: one.booking.id, orderId: "order_fixture", paymentId: "payment_fixture", signature },
+    status: 403,
   });
   const wh = await fetch(origin + "/api/cab/payments/razorpay/webhook", {
     method: "POST",
@@ -724,7 +756,7 @@ try {
   });
   assert.equal(wh.status, 503);
   pass(
-    "Live Razorpay callbacks/webhooks require valid signatures and remain disabled without persistent storage",
+    "Razorpay verification rejects malformed payloads and unauthorised orders; webhooks stay disabled without a configured persistent gateway",
   );
   admin = (await api("admin", { admin: true })).value;
   const draft = {
@@ -907,6 +939,8 @@ try {
   pass(
     "Email rendering stays safe/unsent, credentials are not exposed and logout revokes server access",
   );
+  for (let i = 0; i < 16; i++) await api("quote", { method: "POST", body: {}, ip: "127.2.0.250", status: i < 15 ? 400 : 429 });
+  pass("Dedicated quote rate limit rejects the sixteenth request in one window");
   if (process.argv.includes("--browser")) {
     const { checkCabSystemBrowser } =
       await import("./check-cab-system-browser.mjs");

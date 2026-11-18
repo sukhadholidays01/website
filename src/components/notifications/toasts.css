@@ -1,0 +1,10 @@
+.sh-toast-region{position:fixed;z-index:10000;top:calc(64px + var(--announcement-height,0px) + 14px + env(safe-area-inset-top,0px));right:20px;width:min(340px,calc(100vw - 32px));display:flex;flex-direction:column;gap:10px;max-height:calc(100svh - 64px - var(--announcement-height,0px) - 40px - env(safe-area-inset-top,0px));overflow-y:auto;overscroll-behavior:contain;padding:2px 2px 10px;pointer-events:none;scrollbar-width:none}
+.sh-toast-region::-webkit-scrollbar{display:none}
+.sh-toast{--toast-status:#0f4c81;pointer-events:auto;display:flex;align-items:flex-start;flex-shrink:0;gap:10px;width:100%;box-sizing:border-box;padding:12px;border:1px solid #e1e8ec;border-radius:10px;background:#fff;color:#102a43;box-shadow:0 4px 18px #102a4312;animation:sh-toast-in .22s ease-out;font-size:12px}
+.sh-toast>svg{flex-shrink:0;margin-top:2px;color:var(--toast-status)}.sh-toast>div{flex:1;min-width:0;padding-top:1px}
+.sh-toast strong{display:block;font-size:12px;font-weight:600;line-height:1.5;overflow-wrap:anywhere}.sh-toast p{margin:3px 0 0;font-size:12px;line-height:1.5;color:#526a79;overflow-wrap:anywhere}.sh-toast small{display:block;margin-top:5px;color:#526a79}
+.sh-toast button{display:grid;place-items:center;flex-shrink:0;width:28px;height:28px;margin:-3px -3px 0 0;padding:4px;border:0;border-radius:6px;background:transparent;color:#647783;cursor:pointer}.sh-toast button:hover{background:#f1f5f7;color:#102a43}.sh-toast button:focus-visible{outline:2px solid #0ea5b7;outline-offset:2px}
+.sh-toast-success{--toast-status:#12865b}.sh-toast-error{--toast-status:#a73333}.sh-toast-warning{--toast-status:#a46515}.sh-spin{animation:sh-spin 1s linear infinite}
+@keyframes sh-spin{to{transform:rotate(360deg)}}@keyframes sh-toast-in{from{opacity:0;transform:translate(10px,-4px)}to{opacity:1;transform:translate(0,0)}}
+@media(max-width:600px){.sh-toast-region{right:12px;width:min(340px,calc(100vw - 24px));top:calc(64px + var(--announcement-height,0px) + 12px + env(safe-area-inset-top,0px))}.sh-toast button{width:32px;height:32px}}
+@media(prefers-reduced-motion:reduce){.sh-toast,.sh-spin{animation:none}}

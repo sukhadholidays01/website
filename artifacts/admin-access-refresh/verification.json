@@ -1,0 +1,64 @@
+{
+  "checks": [
+    {
+      "width": 1440,
+      "page": "/admin/login"
+    },
+    {
+      "width": 1440,
+      "page": "/admin/forgot-password"
+    },
+    {
+      "width": 1440,
+      "page": "/admin/reset-password"
+    },
+    {
+      "width": 1440,
+      "page": "/cabs",
+      "interactive": true,
+      "tiles": 0
+    },
+    {
+      "width": 820,
+      "page": "/admin/login"
+    },
+    {
+      "width": 820,
+      "page": "/admin/forgot-password"
+    },
+    {
+      "width": 820,
+      "page": "/admin/reset-password"
+    },
+    {
+      "width": 820,
+      "page": "/cabs",
+      "interactive": true,
+      "tiles": 4
+    },
+    {
+      "width": 390,
+      "page": "/admin/login"
+    },
+    {
+      "width": 390,
+      "page": "/admin/forgot-password"
+    },
+    {
+      "width": 390,
+      "page": "/admin/reset-password"
+    },
+    {
+      "width": 390,
+      "page": "/cabs",
+      "interactive": true,
+      "tiles": 6
+    },
+    {
+      "bookingFlow": "journey-vehicle-fare-passengers-payment-review",
+      "submitted": false
+    }
+  ],
+  "runtimeErrors": [],
+  "realBookingCreated": false
+}
