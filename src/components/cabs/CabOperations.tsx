@@ -1,4 +1,6 @@
 "use client";
+import { AdminCommercial } from "./CabCommercial";
+import { QuotationEditor } from "./QuotationEditor";
 import { useState } from "react";
 import {
   cabBalance,
@@ -9,6 +11,9 @@ import {
 import type { CabOperationsData } from "@/lib/cab/models";
 import { FareDetails } from "./CabBookingFlow";
 import "./cab-live.css";
+import { CabTracking } from "./CabTracking";
+import { cabApi } from "@/lib/cab/client";
+import { GuestDocuments } from "./GuestDocuments";
 const fields = (form: HTMLFormElement) =>
   Object.fromEntries(new FormData(form));
 export function BookingOperations({
@@ -16,7 +21,9 @@ export function BookingOperations({
   run,
   busy,
   operations,
+  role="VIEWER",
 }: {
+  role?:string;
   booking: PublicCabBooking;
   run: (action: unknown) => Promise<void>;
   busy: boolean;
@@ -27,11 +34,17 @@ export function BookingOperations({
     "quote",
   );
   const [paymentType, setPaymentType] = useState("receipt");
+  const [driverLink, setDriverLink] = useState(""), [notice, setNotice] = useState("");
+  const [reassignmentReason,setReassignmentReason]=useState("");
+  const [assignmentReview, setAssignmentReview] = useState<{ driverId: string; vehicleId: string; driver: string; vehicle: string }>();
   const preConfirmation = ["REQUESTED", "QUOTED", "ACCEPTED"].includes(
     b.status,
   );
   return (
     <div className="cb-operation-detail">
+      <GuestDocuments bookingId={b.id} admin/>
+      <AdminCommercial booking={b} canFinance={["OWNER","ACCOUNTANT"].includes(role)} canDispatch={["OWNER","DISPATCHER"].includes(role)}/>
+      {b.journey.itinerary && <section className="cb-main-card"><h3>Multi-day itinerary</h3><p>{b.journey.departure} → {b.journey.returnAt}</p><ol>{b.journey.itinerary.stops.map((stop,i)=><li key={i}>{stop.place.label} · {stop.overnight?"Overnight requested":"Day stop"} · {stop.notes}</li>)}</ol><p>{b.journey.itinerary.requirements}</p></section>}
       <div className="cb-op-detail-heading">
         <span className="cb-status-badge">{b.status.replaceAll("_", " ")}</span>
         <h2>
@@ -39,6 +52,9 @@ export function BookingOperations({
         </h2>
         <p>{b.id}</p>
       </div>
+      <div className="cb-actions"><button type="button" className="cb-btn" disabled={busy} onClick={async () => { try { await cabApi("admin/resend-email/" + b.id, { method: "POST", body: {} }); setNotice("Email queued under the configured sending policy."); } catch(e) { setNotice((e as Error).message); } }}>Resend booking email</button>{["ASSIGNED", "IN_PROGRESS"].includes(b.status) && <button type="button" className="cb-btn" disabled={busy} onClick={async () => { try { const access = await cabApi<{ token: string }>("admin/driver-access/" + b.id, { method: "POST", body: {} }); setDriverLink(location.origin + "/cabs/driver#access=" + access.token); setNotice("Private driver link issued. Share only with the assigned driver. Issuing again revokes earlier links."); } catch(e) { setNotice((e as Error).message); } }}>Issue driver GPS access</button>}</div>
+      {notice && <p role="status" className="cb-callout">{notice}</p>}{driverLink && <label>Private assigned-driver link<input readOnly value={driverLink} onFocus={e => e.currentTarget.select()}/></label>}
+      {["ASSIGNED", "IN_PROGRESS"].includes(b.status) && <CabTracking booking={b} admin/>}
       <dl className="cb-details">
         <div>
           <dt>Customer</dt>
@@ -160,80 +176,14 @@ export function BookingOperations({
           </button>
         ))}
       </div>
-      {tab === "quote" &&
-        (preConfirmation ? (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const f = fields(e.currentTarget);
-              void run({
-                action: "quote",
-                amount: Number(f.amount),
-                inclusions: f.inclusions,
-                exclusions: f.exclusions,
-              });
-            }}
-          >
-            <p className="cb-note">
-              Issue the final total after checking addresses, availability and
-              extras. Reissuing a quote clears previous acceptance. Ask the
-              customer to refresh their private booking page.
-            </p>
-            <div className="cb-fields">
-              <label className="cb-full">
-                <span>Final total · INR</span>
-                <input
-                  type="number"
-                  name="amount"
-                  min="0.01"
-                  step="0.01"
-                  max="10000000"
-                  required
-                  defaultValue={b.fare.total ?? ""}
-                />
-              </label>
-              <label>
-                <span>Included in total</span>
-                <textarea
-                  name="inclusions"
-                  minLength={3}
-                  maxLength={500}
-                  required
-                  defaultValue={b.fare.total === null ? "" : b.fare.inclusions}
-                />
-              </label>
-              <label>
-                <span>Extra / excluded charges</span>
-                <textarea
-                  name="exclusions"
-                  minLength={3}
-                  maxLength={500}
-                  required
-                  defaultValue={b.fare.total === null ? "" : b.fare.exclusions}
-                />
-              </label>
-            </div>
-            <button className="cb-btn cb-primary" disabled={busy}>
-              Send quote to booking page
-            </button>
-          </form>
-        ) : (
-          <p className="cb-note">
-            Quotes can be issued before confirmation. Confirmed fares remain
-            fixed.
-          </p>
-        ))}
+      {tab === "quote" && (preConfirmation ? <QuotationEditor booking={b} run={run} busy={busy}/> : <p className="cb-note">Confirmed quotations remain fixed.</p>)}
       {tab === "assignment" &&
         (["CONFIRMED", "ASSIGNED"].includes(b.status) ? (
           <form
             onSubmit={(e) => {
               e.preventDefault();
               const f = fields(e.currentTarget);
-              void run({
-                action: "assign",
-                driverId: f.driverId,
-                vehicleId: f.vehicleId,
-              });
+              void cabApi<{ assignment: { driverId: string; vehicleId: string; driver: string; vehicle: string } }>("admin/preview-assignment", { method: "POST", body: { bookingId: b.id, driverId: f.driverId, vehicleId: f.vehicleId } }).then(result => setAssignmentReview(result.assignment)).catch(e => setNotice(e.message));
             }}
           >
             <p className="cb-note">
@@ -303,8 +253,10 @@ export function BookingOperations({
               </label>
             </div>
             <button className="cb-btn cb-primary" disabled={busy}>
-              Save assignment
+              Review assignment
             </button>
+            {b.assignment&&<label>Reassignment reason<input required minLength={5} maxLength={500} value={reassignmentReason} onChange={e=>setReassignmentReason(e.target.value)}/></label>}
+            {assignmentReview && <div className="cb-confirm-panel"><h3>Confirm this assignment</h3><p>{assignmentReview.driver} · {assignmentReview.vehicle}</p><p className="cb-note">Schedule, approval and capacity checks passed. The server checks again when you confirm.</p><button type="button" className="cb-btn cb-primary" disabled={busy} onClick={() => { void run({ action: "assign", driverId: assignmentReview.driverId, vehicleId: assignmentReview.vehicleId,...(b.assignment?{reason:reassignmentReason}:{}) }); setAssignmentReview(undefined); }}>Confirm assignment</button></div>}
           </form>
         ) : (
           <p className="cb-note">

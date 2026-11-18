@@ -27,23 +27,27 @@ function rememberFirstVisitDismissal(): void {
   }
 }
 
-export function AuthModalProvider({ children }: { children: React.ReactNode }) {
+export function AuthModalProvider({ children, promptOnFirstVisit = true }: { children: React.ReactNode; promptOnFirstVisit?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
   const returnFocusRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     let isActive = true;
 
-    window.queueMicrotask(() => {
-      if (isActive && !hasDismissedFirstVisitPrompt()) {
+    const timer=window.setTimeout(() => {
+      if (isActive && promptOnFirstVisit && location.pathname==='/' && !hasDismissedFirstVisitPrompt() && !document.activeElement?.matches('input,select,textarea,button,a') && !document.querySelector('dialog[open]') && !location.hash && window.scrollY<250) {
+        returnFocusRef.current=document.activeElement instanceof HTMLElement?document.activeElement:null;
         setIsOpen(true);
       }
-    });
+    },1800);
+    const skip=()=>rememberFirstVisitDismissal();
+    document.addEventListener('pointerdown',skip,{once:true});document.addEventListener('keydown',skip,{once:true});
 
     return () => {
       isActive = false;
+      clearTimeout(timer);document.removeEventListener('pointerdown',skip);document.removeEventListener('keydown',skip);
     };
-  }, []);
+  }, [promptOnFirstVisit]);
 
   function openLoginModal() {
     returnFocusRef.current = document.activeElement instanceof HTMLElement

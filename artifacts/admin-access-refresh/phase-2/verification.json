@@ -1,0 +1,30 @@
+{
+  "passed": true,
+  "checks": [
+    {
+      "width": 1440,
+      "multiDayControls": true,
+      "noOverflow": true
+    },
+    {
+      "width": 820,
+      "multiDayControls": true,
+      "noOverflow": true
+    },
+    {
+      "width": 390,
+      "multiDayControls": true,
+      "noOverflow": true
+    },
+    {
+      "guestRequest": true,
+      "requestStatus": "REQUESTED",
+      "privateLinkExchanged": true,
+      "fragmentRemoved": true,
+      "sensitiveDetailsBlocked": true
+    }
+  ],
+  "runtimeErrors": [],
+  "isolatedBookingCreatedAndCleaned": true,
+  "realMessagesSent": false
+}

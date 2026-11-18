@@ -4,17 +4,16 @@ import { readDatabase, writeDatabase, invalidateDatabase } from '@/lib/admin/rep
 import { seedDatabase } from '@/data/admin/seed';
 import type { AdminDatabase, AdminRecord, Module, Role } from '@/types/admin';
 import { rolePermissions } from '@/types/admin';
+import { useAdminSession } from './AdminSessionProvider';
+import { useToast } from '@/components/notifications/ToastProvider';
 const copy = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
 export type AdminContextValue = {
     db: AdminDatabase;
     role: Role;
     driverId: string;
-    session: boolean;
     ready: boolean;
     toast: string;
     notify: (text: string) => void;
-    login: (role: Role, driverId: string) => void;
-    logout: () => void;
     can: (module: string) => boolean;
     mutate: (action: string, entity: string, update: (db: AdminDatabase) => void) => void;
     save: (module: Module, record: AdminRecord) => void;
@@ -25,20 +24,16 @@ const Context = createContext<AdminContextValue | null>(null);
 export function AdminProvider({ children }: {
     children: ReactNode;
 }) {
-    const [db, setDb] = useState(seedDatabase), [role, setRole] = useState<Role>('SUPER_ADMIN'), [driverId, setDriverId] = useState(''), [session, setSession] = useState(false), [ready, setReady] = useState(false), [toast, setToast] = useState('');
-    useEffect(() => { const refresh = () => { setDb(copy(readDatabase())); }; const externalRefresh = () => { invalidateDatabase(); refresh(); }; const timer = setTimeout(() => { refresh(); try {
-        const value = JSON.parse(sessionStorage.getItem('sukhad-demo-session') || 'null');
-        if (value && value.role in rolePermissions) {
-            setRole(value.role);
-            setDriverId(value.driverId || '');
-            setSession(true);
-        }
-    }
-    catch { } setReady(true); }, 0); window.addEventListener('storage', externalRefresh); window.addEventListener('sukhad-admin-change', refresh); return () => { clearTimeout(timer); window.removeEventListener('storage', externalRefresh); window.removeEventListener('sukhad-admin-change', refresh); }; }, []);
-    useEffect(() => { if (!toast)
-        return; const timer = setTimeout(() => setToast(''), 5000); return () => clearTimeout(timer); }, [toast]);
+    const { role: serverRole } = useAdminSession();
+    // Compatibility names for demo presentation only; existing server permissions remain authoritative.
+    const role: Role = serverRole === 'OWNER' ? 'SUPER_ADMIN' : serverRole === 'DISPATCHER' ? 'OPERATIONS_MANAGER' : serverRole;
+    const { notify: pushToast } = useToast();
+    const setToast = (message: string) => { pushToast({ kind: 'info', title: message }); };
+    const [db, setDb] = useState(seedDatabase), [ready, setReady] = useState(false);
+    const driverId = '', toast = '';
+    useEffect(() => { const refresh = () => { setDb(copy(readDatabase())); }; const externalRefresh = () => { invalidateDatabase(); refresh(); }; const timer = setTimeout(() => { refresh(); setReady(true); }, 0); window.addEventListener('storage', externalRefresh); window.addEventListener('sukhad-admin-change', refresh); return () => { clearTimeout(timer); window.removeEventListener('storage', externalRefresh); window.removeEventListener('sukhad-admin-change', refresh); }; }, []);
     const can = (module: string) => rolePermissions[role].includes('*') || rolePermissions[role].includes(module);
-    function mutate(action: string, entity: string, update: (draft: AdminDatabase) => void) { const draft = copy(readDatabase()); update(draft); draft.collections.activity.unshift({ id: crypto.randomUUID(), name: action, status: 'SUCCESS', isDemo: true, admin: `Demo ${role.toLowerCase().replaceAll('_', ' ')}`, action, entity, date: new Date().toISOString() }); const persisted = writeDatabase(draft); setDb(draft); setToast(persisted ? `${action} · saved in this browser` : `${action} · memory only; browser storage is full or unavailable`); }
+    function mutate(action: string, entity: string, update: (draft: AdminDatabase) => void) { if (role === 'VIEWER') { setToast('Read-only access. No demo record was changed.'); return; } const draft = copy(readDatabase()); update(draft); draft.collections.activity.unshift({ id: crypto.randomUUID(), name: action, status: 'SUCCESS', isDemo: true, admin: `Demo ${role.toLowerCase().replaceAll('_', ' ')}`, action, entity, date: new Date().toISOString() }); const persisted = writeDatabase(draft); setDb(draft); setToast(persisted ? `${action} · demo saved in this browser only` : `${action} · memory only; browser storage is full or unavailable`); }
     function save(module: Module, record: AdminRecord) {
         if (!can(module))
             throw Error('This demo role cannot edit this module.');
@@ -114,15 +109,7 @@ export function AdminProvider({ children }: {
         trip = { id: 'TRIP-' + b.id, name: b.name, bookingId: b.id, status: 'ASSIGNED', isDemo: true };
         draft.collections.trips.push(trip);
     } Object.assign(trip, { driverId: driver.id, vehicleId: vehicle.id, startDate: b.startDate, endDate: b.endDate, status: 'ASSIGNED' }); }); }
-    function login(nextRole: Role, nextDriverId: string) { setRole(nextRole); setDriverId(nextDriverId); setSession(true); try {
-        sessionStorage.setItem('sukhad-demo-session', JSON.stringify({ role: nextRole, driverId: nextDriverId }));
-    }
-    catch { } }
-    function logout() { setSession(false); try {
-        sessionStorage.removeItem('sukhad-demo-session');
-    }
-    catch { } }
-    return <Context.Provider value={{ db, role, driverId, session, ready, toast, notify: setToast, can, login, logout, mutate, save, remove, assign }}>{children}</Context.Provider>;
+    return <Context.Provider value={{ db, role, driverId, ready, toast, notify: setToast, can, mutate, save, remove, assign }}>{children}</Context.Provider>;
 }
 export function useAdmin() { const value = useContext(Context); if (!value)
     throw Error('AdminProvider is required'); return value; }

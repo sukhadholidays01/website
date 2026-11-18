@@ -5,13 +5,16 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { enquiryCategories } from "@/data/services";
+import { useToast } from "@/components/notifications/ToastProvider";
 
 interface EnquiryFormProps {
   initialCategory?: string;
+  initialMessage?: string;
 }
 
-export function EnquiryForm({ initialCategory = "" }: EnquiryFormProps) {
+export function EnquiryForm({ initialCategory = "", initialMessage="" }: EnquiryFormProps) {
   const [isPrepared, setIsPrepared] = useState(false);
+  const { notify } = useToast();
   const selectedCategory = enquiryCategories.includes(initialCategory) ? initialCategory : "";
 
   return (
@@ -21,8 +24,10 @@ export function EnquiryForm({ initialCategory = "" }: EnquiryFormProps) {
       onSubmit={(event) => {
         event.preventDefault();
         setIsPrepared(true);
+        notify({ id: "enquiry-prepared", kind: "info", title: "Enquiry prepared", description: "Your details are ready in this form. Nothing has been sent yet." });
       }}
       onChange={() => setIsPrepared(false)}
+      onInvalidCapture={() => notify({ id: "enquiry-validation", kind: "error", title: "Check your details", description: "Please correct the highlighted field." })}
     >
       <h2 className="text-2xl font-semibold text-brand-navy">Travel enquiry</h2>
       <p className="mt-2 text-sm leading-6 text-secondary">
@@ -52,6 +57,7 @@ export function EnquiryForm({ initialCategory = "" }: EnquiryFormProps) {
           <textarea
             id="message"
             name="message"
+            defaultValue={initialMessage}
             rows={5}
             placeholder="Tell us where and when you would like to travel."
             className="mt-2 w-full resize-y rounded-lg border border-border bg-white px-3.5 py-3 text-sm outline-none transition-colors placeholder:text-secondary/75 focus:border-brand-teal focus:ring-2 focus:ring-brand-light-teal"

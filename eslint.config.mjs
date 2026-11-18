@@ -16,6 +16,10 @@ const eslintConfig = defineConfig([
     ".edge*/**",
     "artifacts/admin-browser-profile/**",
     "artifacts/**/chrome-profile/**",
+    "artifacts/admin-access-refresh/browser-*/**",
+    "artifacts/admin-access-refresh/phase-1/browser-*/**",
+    "artifacts/admin-access-refresh/phase-2/browser-*/**",
+    "artifacts/admin-access-refresh/phase-3/browser-*/**",
   ]),
 ]);
 

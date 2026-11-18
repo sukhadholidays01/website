@@ -6,23 +6,14 @@ import { changeCabState } from "./store";
 import { authorizeBooking, getBooking } from "./service";
 import { CabError } from "./security";
 import { queueCabEmail } from "./notifications";
-import {
-  verifyRazorpaySignature,
-  verifyRazorpayWebhook,
-} from "./payment-signatures";
+import { razorpayConfiguration } from "./razorpay";
 
 export function paymentConfiguration() {
-  return {
-    mode: "mock",
-    razorpayCredentialsPresent: Boolean(
-      process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET,
-    ),
-    liveEnabled: false,
-    reason:
-      "Live money movement requires persistent booking/payment transactions and an approved hosting configuration.",
-  };
+  const configuration = razorpayConfiguration();
+  return { ...configuration, mode: configuration.mode === "disabled" && process.env.CAB_STORAGE_MODE === "memory" ? "mock" : configuration.mode, razorpayCredentialsPresent: Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET), reason: configuration.enabled ? "Orders, captured payments and refunds are verified against Razorpay on the server." : "Online collection requires MySQL, configured Razorpay keys/webhook secret and explicit production live activation." };
 }
 export async function initiateCabPayment(bookingId: string, token: string) {
+  if (process.env.NODE_ENV === "production") throw new CabError("Mock payments are prohibited in production.", 403);
   return changeCabState((state) => {
     const b = getBooking(state, bookingId);
     authorizeBooking(b, token);
@@ -67,6 +58,7 @@ export async function simulateCabPayment(
   token: string,
   input: unknown,
 ) {
+  if (process.env.NODE_ENV === "production") throw new CabError("Mock payments are prohibited in production.", 403);
   const op = z
     .object({
       attemptId: z.string().uuid(),
@@ -152,44 +144,4 @@ export async function simulateCabPayment(
     );
     return attempt;
   });
-}
-export function validatePreparedRazorpayCallback(input: unknown) {
-  const p = z
-    .object({
-      orderId: z.string().min(1),
-      paymentId: z.string().min(1),
-      signature: z.string(),
-    })
-    .parse(input);
-  if (
-    !verifyRazorpaySignature(
-      p.orderId,
-      p.paymentId,
-      p.signature,
-      process.env.RAZORPAY_KEY_SECRET || "",
-    )
-  )
-    throw new CabError("Invalid payment signature.", 401);
-  // Signature alone does not establish capture/amount/currency or durable idempotency.
-  throw new CabError(
-    "Razorpay settlement is intentionally disabled until persistent storage is implemented. No payment was recorded.",
-    503,
-  );
-}
-export function validatePreparedRazorpayWebhook(
-  rawBody: string,
-  signature: string,
-) {
-  if (
-    !verifyRazorpayWebhook(
-      rawBody,
-      signature,
-      process.env.RAZORPAY_WEBHOOK_SECRET || "",
-    )
-  )
-    throw new CabError("Invalid webhook signature.", 401);
-  throw new CabError(
-    "Verified webhook not processed: persistent transaction handling is not enabled.",
-    503,
-  );
 }

@@ -2,7 +2,7 @@ export type BookingStatus = 'ENQUIRY' | 'PENDING' | 'CONFIRMED' | 'IN_PROGRESS' 
 export type BookingType = 'Flight' | 'Bus' | 'Cab' | 'Holiday' | 'Custom Route';
 export type DriverStatus = 'AVAILABLE' | 'ASSIGNED' | 'ON_TRIP' | 'OFF_DUTY' | 'INACTIVE';
 export type VehicleStatus = 'AVAILABLE' | 'ASSIGNED' | 'ON_TRIP' | 'MAINTENANCE' | 'INACTIVE';
-export type Role = 'SUPER_ADMIN' | 'OPERATIONS_MANAGER' | 'BOOKING_EXECUTIVE' | 'ACCOUNTANT' | 'DRIVER';
+export type Role = 'SUPER_ADMIN' | 'OPERATIONS_MANAGER' | 'BOOKING_EXECUTIVE' | 'ACCOUNTANT' | 'DRIVER' | 'VIEWER';
 export type FieldValue = string | number | boolean;
 export interface AdminRecord { id: string; name: string; status: string; isDemo: boolean; [key: string]: FieldValue }
 export interface Customer extends AdminRecord { phone: string; email: string; travellers: number; notes: string }
@@ -32,6 +32,7 @@ export type Module = 'bookings' | 'enquiries' | 'trips' | 'customers' | 'drivers
 export interface AdminDatabase { collections: Record<Module, AdminRecord[]>; itineraries: Itinerary[]; assignments: VehicleAssignment[]; version: 1 }
 export interface Repository<T> { list(): Promise<T[]>; get(id: string): Promise<T | undefined>; save(record: T): Promise<void>; remove(id: string): Promise<void> }
 export const rolePermissions: Record<Role, readonly string[]> = {
+  VIEWER: ['*'],
   SUPER_ADMIN: ['*'], OPERATIONS_MANAGER: ['dashboard','bookings','trips','drivers','vehicles','itineraries','activity'],
   BOOKING_EXECUTIVE: ['dashboard','enquiries','customers','bookings'], ACCOUNTANT: ['dashboard','payments','documents','reports'], DRIVER: ['trips'],
 };

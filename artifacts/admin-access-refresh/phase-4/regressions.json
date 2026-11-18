@@ -1,0 +1,67 @@
+[
+  {
+    "command": "node scripts/check-admin-access.mjs",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "command": "node scripts/check-admin-password-reset.mjs",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "command": "node scripts/check-cab-request.mjs",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "command": "node scripts/check-cab-persistence.mjs",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "command": "node scripts/check-phase2-security.mjs",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "command": "node scripts/check-phase2-http.mjs",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "command": "node scripts/check-phase3-operations.mjs",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "command": "node scripts/check-phase3-mysql.mjs",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "command": "node scripts/check-cab-system.mjs --unit-only",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "command": "node scripts/check-cab-enhancements.mjs",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "command": "node scripts/check-phase2-browser.mjs",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "command": "node scripts/check-phase3-browser.mjs --submission-only",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "command": "node scripts/check-admin-foundation.mjs --phase4",
+    "status": "PASS",
+    "exit": 0
+  }
+]

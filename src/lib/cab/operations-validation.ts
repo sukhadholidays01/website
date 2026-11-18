@@ -1,3 +1,4 @@
+import { advancePolicySchema } from "./commercial-validation";
 import { z } from "zod";
 import {
   placeSchema,
@@ -51,6 +52,7 @@ export const farePolicySchema = z
   });
 export const managedRouteSchema = z
   .object({
+    geometry: z.array(z.tuple([z.number().finite().min(-180).max(180), z.number().finite().min(-90).max(90)])).max(10000).optional(),
     id: text(100).min(1),
     name: text(150).min(3),
     origin: placeSchema,
@@ -143,11 +145,12 @@ export const managedRouteSchema = z
   });
 export const managedVehicleSchema = z
   .object({
+    airConditioning: z.enum(["ac", "non-ac", "unspecified"]).optional(),
     id: text(100).min(1),
     category: vehicleSchema,
     name: text(100).min(2),
     model: text(100).min(2),
-    registration: text(30).min(4),
+    registration: text(30).min(4).transform(v=>v.toUpperCase()).refine(v=>/^[A-Z0-9][A-Z0-9 -]+$/.test(v),"Use a registration containing letters, numbers, spaces or hyphens."),
     seats: z.number().int().min(1).max(30),
     luggage: z.number().int().min(0).max(50).nullable(),
     amenities: z.array(text(80).min(1)).max(20),
@@ -159,7 +162,7 @@ export const managedVehicleSchema = z
     development: z.boolean(),
   })
   .superRefine((v, c) => {
-    if (v.image && !/^\/images\/[a-zA-Z0-9/_.-]+$/.test(v.image))
+    if (v.image && !/^\/images\/[a-zA-Z0-9/_.-]+$/.test(v.image) && !/^\/api\/cab\/media\/[a-f0-9-]{36}\.(jpg|png|webp)$/.test(v.image))
       c.addIssue({
         code: "custom",
         message:
@@ -167,6 +170,9 @@ export const managedVehicleSchema = z
       });
   });
 export const managedDriverSchema = z.object({
+  email: z.union([z.email().max(190), z.literal("")]).optional(),
+  license: text(100).optional(),
+  licenseExpiry: z.union([z.iso.date(), z.literal("")]).optional(),
   id: text(100).min(1),
   name: text(100).min(2),
   phone: phoneSchema,
@@ -177,10 +183,13 @@ export const managedDriverSchema = z.object({
   development: z.boolean(),
 });
 export const cabSettingsSchema = z.object({
+  advancePolicy: advancePolicySchema.optional(),
+  payments: z.object({ full: z.boolean(), advance: z.boolean(), advanceType: z.enum(["fixed", "percent"]), advanceValue: z.number().finite().positive().max(10000000), payLater: z.boolean() }).refine(p => p.advanceType !== "percent" || p.advanceValue <= 100, "Advance percentage cannot exceed 100.").optional(),
+  cancellationPolicy: text(3000).optional(),
   enabledTripTypes: z.array(tripSchema).min(1).max(5),
   fixedAdditionalCharge: amount,
   bookingPolicy: text(3000).min(10),
   assignmentBufferMinutes: z.number().int().min(0).max(240),
-  notifications: z.object({ customer: z.boolean(), admin: z.boolean() }),
+  notifications: z.object({ customer: z.boolean(), admin: z.boolean(), driver: z.boolean().optional() }),
   mockPaymentsEnabled: z.boolean(),
 });

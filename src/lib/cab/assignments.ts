@@ -13,7 +13,7 @@ export function assignmentWindow(
     ? booking.journey.durationHours * 60
     : (booking.route?.durationMinutes ?? configured?.durationMinutes);
   const end =
-    booking.journey.tripType === "round-trip" && booking.journey.returnAt
+    ["round-trip","multi-day"].includes(booking.journey.tripType) && booking.journey.returnAt
       ? indiaTime(booking.journey.returnAt)
       : minutes
         ? start + minutes * 60000
@@ -58,6 +58,7 @@ export function assertAssignment(
   )
     throw Error("This vehicle is not enabled for the requested route.");
   const [start, end] = assignmentWindow(booking, state);
+  if(driver.licenseExpiry&&new Date(driver.licenseExpiry+"T23:59:59+05:30").getTime()<end-state.operations.settings.assignmentBufferMinutes*60000)throw Error("Driver licence expires before this journey ends.");
   for (const other of state.bookings) {
     if (
       other.id === booking.id ||

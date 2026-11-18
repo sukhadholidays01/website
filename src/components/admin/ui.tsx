@@ -1,18 +1,21 @@
 'use client';
+import { useToastFeedback } from '@/components/notifications/ToastProvider';
+import Link from 'next/link';
 import { useEffect, useRef, type ReactNode } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { X, Search, ChevronLeft, ChevronRight, ImagePlus, FileUp, MoreHorizontal } from 'lucide-react';
 export function StatusBadge({ status }: {
     status: string;
 }) { return <span className={`a-badge a-status-${status.toLowerCase()}`}>{status.replaceAll('_', ' ')}</span>; }
-export function PageHeader({ title, description, children }: {
+export function PageHeader({ title, description, children, demo = true }: {
     title: string;
     description: string;
     children?: ReactNode;
-}) { return <div className="a-page-header"><div><div className="a-eyebrow">TRAVEL OPERATIONS <span className="a-demo">DEMO</span></div><h1>{title}</h1><p>{description}</p></div><div className="a-actions">{children}</div></div>; }
+    demo?: boolean;
+}) { return <div className="a-page-header"><div><div className="a-eyebrow">TRAVEL OPERATIONS {demo && <span className="a-demo">DEMO</span>}</div><h1>{title}</h1><p>{description}</p></div><div className="a-actions">{children}</div></div>; }
 export function Breadcrumbs({ items }: {
     items: string[];
-}) { return <nav aria-label="Breadcrumb" className="a-breadcrumb">{items.join(' / ')}</nav>; }
+}) { return <nav aria-label="Breadcrumb" className="a-breadcrumb"><ol>{items.map((item, index) => <li key={index}>{index > 0 && <span aria-hidden="true"> / </span>}{index === 0 ? <Link href="/admin">{item}</Link> : <span aria-current={index === items.length - 1 ? 'page' : undefined}>{item}</span>}</li>)}</ol></nav>; }
 export function StatCard({ label, value, detail, icon }: {
     label: string;
     value: ReactNode;
@@ -62,12 +65,22 @@ export function FormModal({ title, children, onClose, wide = false }: {
 } } document.addEventListener('keydown', key); return () => { document.body.style.overflow = overflow; document.removeEventListener('keydown', key); before?.focus(); }; }, [onClose]); return <div className="a-overlay" onMouseDown={e => { if (e.target === e.currentTarget)
     onClose(); }}><motion.div ref={ref} tabIndex={-1} className={`a-modal ${wide ? 'a-modal-wide' : ''}`} role="dialog" aria-modal="true" aria-label={title} initial={reduced ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .18 }}><div className="a-modal-head"><h2>{title}</h2><button onClick={onClose} aria-label="Close dialog"><X size={20}/></button></div>{children}</motion.div></div>; }
 export const FormDrawer = FormModal;
-export function ConfirmDialog({ title, description, onConfirm, onClose }: {
+export function ConfirmDialog({ title, description, onConfirm, onClose, busy = false, confirmLabel = 'Confirm', cancelLabel = 'Keep record' }: {
     title: string;
     description: string;
     onConfirm: () => void;
     onClose: () => void;
-}) { return <FormModal title={title} onClose={onClose}><p>{description}</p><div className="a-form-footer"><button className="a-btn" onClick={onClose}>Keep record</button><button className="a-btn a-danger" onClick={onConfirm}>Confirm</button></div></FormModal>; }
+    busy?: boolean;
+    confirmLabel?: string;
+    cancelLabel?: string;
+}) { return <FormModal title={title} onClose={() => { if (!busy) onClose(); }}><p>{description}</p><div className="a-form-footer"><button className="a-btn" disabled={busy} onClick={onClose}>{cancelLabel}</button><button className="a-btn a-danger" disabled={busy} onClick={onConfirm}>{confirmLabel}</button></div></FormModal>; }
+
+export function LoadingState({ label = 'Loading records' }: { label?: string }) {
+    return <section className="a-panel a-panel-body a-loading-state" role="status" aria-label={label}><p>{label}…</p><div className="a-skeleton"/><div className="a-skeleton"/><div className="a-skeleton"/></section>;
+}
+export function ErrorState({ description, onRetry }: { description: string; onRetry?: () => void }) {
+    return <section className="a-panel a-panel-body a-error-state" role="alert"><h2>Unable to load this workspace</h2><p>{description}</p>{onRetry && <button className="a-btn" onClick={onRetry}>Retry</button>}</section>;
+}
 export function DatePicker({ label, value, onChange }: {
     label: string;
     value: string;
@@ -116,4 +129,4 @@ export function ActivityLog({ items }: {
 }) { return <Timeline items={items.map(a => ({ title: a.action, detail: a.entity, time: new Date(a.date).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'short', timeStyle: 'short' }) }))}/>; }
 export function NotificationToast({ message }: {
     message: string;
-}) { return <AnimatePresence>{message && <motion.div className="a-toast" role="status" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>{message}</motion.div>}</AnimatePresence>; }
+}) { useToastFeedback("",message,"info"); return null; }

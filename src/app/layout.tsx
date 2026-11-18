@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { WebsiteShell } from "@/components/layout/WebsiteShell";
 import { TravelMotion } from "@/components/motion/TravelMotion";
 import { siteConfig } from "@/config/site";
+import { ToastProvider } from "@/components/notifications/ToastProvider";
 
 import "./globals.css";
 
@@ -28,7 +29,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         >
           Skip to main content
         </a>
-        <TravelMotion><WebsiteShell>{children}</WebsiteShell></TravelMotion>
+        <ToastProvider><TravelMotion><WebsiteShell>{children}</WebsiteShell></TravelMotion></ToastProvider>
       </body>
     </html>
   );

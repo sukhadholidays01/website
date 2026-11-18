@@ -1,0 +1,6 @@
+import {spawnSync} from 'node:child_process';
+import {mkdir,writeFile} from 'node:fs/promises';
+const suites=[['check-admin-access.mjs'],['check-admin-password-reset.mjs'],['check-cab-request.mjs'],['check-cab-persistence.mjs'],['check-phase2-security.mjs'],['check-phase2-http.mjs'],['check-phase3-operations.mjs'],['check-phase3-mysql.mjs'],['check-cab-system.mjs','--unit-only'],['check-cab-enhancements.mjs']];
+if(process.argv.includes('--browser'))suites.push(['check-phase2-browser.mjs'],['check-phase3-browser.mjs','--submission-only'],['check-admin-foundation.mjs','--phase4']);
+const results=[];await mkdir('artifacts/admin-access-refresh/phase-4',{recursive:true});
+for(const args of suites){const run=spawnSync(process.execPath,['scripts/'+args[0],...args.slice(1)],{encoding:'utf8',timeout:900000,maxBuffer:4*1024*1024,windowsHide:true});const status=run.status===0?'PASS':'FAIL';const result={command:'node scripts/'+args.join(' '),status,exit:run.status};results.push(result);console.log(JSON.stringify(result));await writeFile('artifacts/admin-access-refresh/phase-4/'+args[0]+'.log',(run.stdout||'')+(run.stderr||''));await writeFile('artifacts/admin-access-refresh/phase-4/regressions.json',JSON.stringify(results,null,2));if(status==='FAIL')process.exitCode=1;}

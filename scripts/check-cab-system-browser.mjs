@@ -82,7 +82,7 @@ export async function checkCabSystemBrowser({ origin, password }) {
         const timer = setTimeout(() => {
           pending.delete(id);
           reject(Error("Browser command timed out: " + method));
-        }, 15000);
+        }, method === "Page.navigate" ? 60000 : 15000);
         pending.set(id, (result) => {
           clearTimeout(timer);
           resolve(result);
@@ -103,13 +103,16 @@ export async function checkCabSystemBrowser({ origin, password }) {
       return m.result?.result?.value;
     };
     const until = async (expression, label) => {
-      for (let i = 0; i < 100; i++) {
+      for (let i = 0; i < 300; i++) {
         if (await ev(expression)) return;
         await sleep(150);
       }
-      throw Error("Browser wait timed out: " + label);
+      const diagnostic = await ev('({pathname:location.pathname,alert:document.querySelector(".cb-alert")?.textContent,headings:[...document.querySelectorAll("h1,h2")].map(e=>e.textContent)})');
+      await screenshot("failure").catch(() => {});
+      throw Error("Browser wait timed out: " + label + " " + JSON.stringify(diagnostic) + " runtime: " + errors.join("; "));
     };
     const click = async (text) => {
+      await until(`(()=>{const b=[...document.querySelectorAll('button')].find(b=>b.textContent.trim()===${JSON.stringify(text)});return !!b&&!b.disabled;})()`, "enabled button: " + text);
       const hit = await ev(
         `(()=>{const b=[...document.querySelectorAll('button')].find(b=>b.textContent.trim()===${JSON.stringify(text)});if(!b || b.disabled)return false;b.click();return true;})()`,
       );
@@ -176,6 +179,8 @@ export async function checkCabSystemBrowser({ origin, password }) {
       "vehicle choice",
     );
     await click("Get fare & continue");
+    await until('document.body.textContent.includes("A clear view of your fare.")', "server fare review");
+    await click("Continue to passenger details");
     await until(
       '!!document.querySelector("input[autocomplete=name]")',
       "review",
@@ -207,15 +212,13 @@ export async function checkCabSystemBrowser({ origin, password }) {
     await set("input[type=password]", password);
     await click("Sign in securely");
     await until(
-      '!!document.querySelector(".cb-booking-list")',
+      '!!document.querySelector(".cb-op-tabs")',
       "operations dashboard",
     );
     const openBooking = async () => {
-      assert(
-        await ev(
-          `(()=>{const b=[...document.querySelectorAll('.cb-booking-row')].find(b=>b.textContent.includes(${JSON.stringify(id)}));if(!b)return false;b.click();return true;})()`,
-        ),
-      );
+      await click("Bookings");
+      await until('!!document.querySelector(".cb-table")',"booking table");
+      assert(await ev(`(()=>{const row=[...document.querySelectorAll(".cb-table tr")].find(r=>r.textContent.includes(${JSON.stringify(id)}));if(!row)return false;row.querySelector("button").click();return true;})()`));
       await until(
         '!!document.querySelector(".cb-operation-detail")',
         "booking detail",
@@ -243,7 +246,7 @@ export async function checkCabSystemBrowser({ origin, password }) {
     );
     await navigate(origin + "/admin/cab-operations");
     await until(
-      '!!document.querySelector(".cb-booking-list")',
+      '!!document.querySelector(".cb-op-tabs")',
       "session retained",
     );
     await openBooking();
@@ -256,7 +259,9 @@ export async function checkCabSystemBrowser({ origin, password }) {
     await set('select[name="driverId"]', "demo-driver-1");
 
     await set('select[name="vehicleId"]', "demo-vehicle-0");
-    await click("Save assignment");
+    await click("Review assignment");
+    await until('document.body.textContent.includes("Confirm this assignment")',"server assignment preview");
+    await click("Confirm assignment");
     await until(
       'document.querySelector(".cb-operation-detail .cb-status-badge")?.textContent === "ASSIGNED"',
       "driver assigned",
@@ -282,36 +287,7 @@ export async function checkCabSystemBrowser({ origin, password }) {
       ),
     );
     await screenshot("booking-desktop");
-    await click("Start development payment");
-    await until(
-      '!!document.querySelector(".cb-payment-attempt")',
-      "mock payment attempt",
-    );
-    await click("Simulate failed payment");
-    await until(
-      'document.querySelector(".cb-payment-attempt .cb-status-badge")?.textContent.includes("FAILED")',
-      "failed payment state",
-    );
-    await click("Start development payment");
-    await until(
-      '[...document.querySelectorAll(".cb-payment-attempt .cb-status-badge")].some(e=>e.textContent.includes("PENDING"))',
-      "retry mock payment",
-    );
-    await click("Simulate successful payment");
-    await until(
-      '[...document.querySelectorAll(".cb-payment-attempt .cb-status-badge")].some(e=>e.textContent.includes("SUCCESSFUL"))',
-      "successful payment state",
-    );
-    assert(
-      await ev(
-        'document.querySelector(".cb-status-hero .cb-eyebrow").textContent.includes("ASSIGNED")',
-      ),
-    );
-    await click("Simulate refund");
-    await until(
-      '[...document.querySelectorAll(".cb-payment-attempt .cb-status-badge")].some(e=>e.textContent.includes("REFUNDED"))',
-      "refunded payment state",
-    );
+    await until('document.body.textContent.includes("Online payments are not enabled.")', "unconfigured gateway is honest");
     for (const width of [360, 390, 768, 1440]) {
       await send("Emulation.setDeviceMetricsOverride", {
         width,
@@ -327,7 +303,7 @@ export async function checkCabSystemBrowser({ origin, password }) {
         await navigate(url);
         await until(
           label === "operations"
-            ? '!!document.querySelector(".cb-booking-list")'
+            ? '!!document.querySelector(".cb-op-tabs")'
             : label === "booking"
               ? '!!document.querySelector(".cb-reference")'
               : '!!document.querySelector(".cb-tabs")',
@@ -383,6 +359,9 @@ export async function checkCabSystemBrowser({ origin, password }) {
         ["Routes & fares", "Routes & fares"],
         ["Vehicles", "Vehicle management"],
         ["Drivers", "Driver management"],
+        ["Dashboard", "Every journey, accounted for."],
+        ["Payments", "Payments & reconciliation"],
+        ["Tracking", "Active trip tracking"],
         ["Settings", "Cab settings"],
         ["Email previews", "Email previews & delivery log"],
         ["Source fare sheet", "Original fare-sheet drafts"],

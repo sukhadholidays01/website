@@ -3,7 +3,7 @@ import { initialCabConfig } from "./config";
 import { developmentOperations } from "./development";
 import type { CabState } from "./types";
 
-/** Future Postgres adapter must provide atomic transactions and uniqueness constraints. */
+/** Adapters preserve atomic transactions and uniqueness constraints. */
 export interface CabRepository {
   readonly mode: "development-mock" | "mysql";
   readonly persistent: boolean;

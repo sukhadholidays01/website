@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalisePhone } from "./guest-policies";
 
 export const tripSchema = z.enum([
   "one-way",
@@ -6,6 +7,7 @@ export const tripSchema = z.enum([
   "airport",
   "local",
   "custom",
+  "multi-day",
 ]);
 export const vehicleSchema = z.enum([
   "sedan",
@@ -53,8 +55,16 @@ export const journeySchema = z
     durationHours: z.number().int().min(1).max(720).optional(),
     pickupAddress: text(400).min(5, "Enter your pickup address or terminal."),
     dropAddress: text(400).min(5, "Enter your drop address or terminal."),
+    luggage: text(200).optional(),
+    itinerary: z.object({ stops: z.array(z.object({ place: placeSchema, overnight: z.boolean(), notes: text(300) })).min(1).max(12), dailyDistanceKm: z.number().finite().int().min(1).max(1000).optional(), requirements: text(1500) }).optional(),
   })
   .superRefine((j, c) => {
+    if (j.tripType === "multi-day") {
+      if (!j.returnAt || indiaTime(j.returnAt)-indiaTime(j.departure)<86400000) c.addIssue({code:"custom",path:["returnAt"],message:"Multi-day travel needs a return at least 24 hours after departure."});
+      if (!j.itinerary?.stops.length) c.addIssue({code:"custom",path:["itinerary"],message:"Add at least one itinerary destination."});
+      const ids=j.itinerary?.stops.map(s=>s.place.id)||[];
+      if (new Set(ids).size!==ids.length) c.addIssue({code:"custom",path:["itinerary"],message:"Use each intermediate destination once; describe return visits in itinerary notes."});
+    } else if (j.itinerary) c.addIssue({code:"custom",path:["itinerary"],message:"An itinerary is only valid for multi-day travel."});
     if (indiaTime(j.departure) < Date.now() + 15 * 60000)
       c.addIssue({
         code: "custom",
@@ -103,11 +113,11 @@ export const journeySchema = z
 export const phoneSchema = z
   .string()
   .trim()
-  .regex(/^\+?[0-9\s-]{10,20}$/, "Enter a valid phone number.")
+  .regex(/^\+?[0-9\s()-]{10,22}$/, "Enter a valid phone number.")
   .refine((v) => {
     const digits = v.replace(/\D/g, "");
     return digits.length >= 10 && digits.length <= 15;
-  }, "Enter a valid phone number.");
+  }, "Enter a valid phone number.").transform(normalisePhone).refine(v=>/^\+[1-9]\d{9,14}$/.test(v),"Include a valid country code.");
 export const customerSchema = z.object({
   name: text(100).min(2),
   phone: phoneSchema,

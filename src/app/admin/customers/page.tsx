@@ -1,3 +1,2 @@
-﻿import {AdminModule} from '@/components/admin/AdminModule';
-export default function Page(){return <AdminModule module="customers"/>;}
-
+import {CustomerManagement} from '@/components/admin/CustomerManagement';
+export default function Page(){return <CustomerManagement/>;}

@@ -1,0 +1,40 @@
+{
+  "passed": true,
+  "checks": [
+    {
+      "width": 1440,
+      "allFourTabsVisible": false,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "allFourTabsVisible": false,
+      "overflow": false
+    },
+    {
+      "width": 1024,
+      "allFourTabsVisible": false,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "allFourTabsVisible": false,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "allFourTabsVisible": true,
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "allFourTabsVisible": true,
+      "overflow": false
+    }
+  ],
+  "touch": true,
+  "swap": true,
+  "draftPreservation": true,
+  "reducedMotion": true,
+  "errors": []
+}

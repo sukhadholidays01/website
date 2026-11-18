@@ -6,7 +6,10 @@ import {
   timingSafeEqual,
 } from "node:crypto";
 import { cookies } from "next/headers";
-import { changeCabState, readCabState } from "./store";
+import { cabStorageMode, changeCabState } from "./store";
+import { getDatabasePool } from "@/lib/db";
+import type { RowDataPacket } from "mysql2/promise";
+import { adminAllowlistConfigured, isAllowedAdminEmail } from "@/lib/auth/allowlist";
 export class CabError extends Error {
   constructor(
     message: string,
@@ -26,35 +29,45 @@ const secret = () => process.env.CAB_SESSION_SECRET || "";
 const sign = (value: string) =>
   createHmac("sha256", secret()).update(value).digest("hex");
 export const adminConfigured = () =>
-  Boolean(
-    process.env.CAB_ADMIN_PASSWORD &&
-    process.env.CAB_ADMIN_PASSWORD.length >= 16 &&
-    secret().length >= 32,
-  );
-export function issueAdminSession() {
+  secret().length >= 32 && cabStorageMode() === "mysql" && adminAllowlistConfigured();
+export type CabRole = "OWNER" | "DISPATCHER" | "ACCOUNTANT" | "VIEWER";
+export const staffRoles: Record<string, CabRole> = { OWNER: "OWNER", SUPER_ADMIN: "OWNER", DISPATCHER: "DISPATCHER", OPERATIONS_MANAGER: "DISPATCHER", BOOKING_EXECUTIVE: "DISPATCHER", ACCOUNTANT: "ACCOUNTANT", VIEWER: "VIEWER" };
+export function staffRole(value: string): CabRole | null { return Object.hasOwn(staffRoles, value) ? staffRoles[value] : null; }
+export function issueAdminSession(role: CabRole = "OWNER") {
   if (!adminConfigured())
     throw new CabError(
-      "Set a cab admin password (16+ characters) and session secret (32+ characters) on the server.",
+      "Configure MySQL and CAB_SESSION_SECRET (32+ characters) for admin login.",
       503,
     );
-  const value = `${Date.now() + 8 * 3600000}.${randomBytes(16).toString("hex")}`;
+  const value = `${Date.now() + 8 * 3600000}.${role}~staff~${randomBytes(16).toString("hex")}`;
   return value + "." + sign(value);
 }
-export async function hasCabAdmin() {
-  if (!adminConfigured()) return false;
-  const token = (await cookies()).get("cab_ops_session")?.value || "";
+export async function validateAdminSession(token: string): Promise<CabRole | null> {
+  if (!adminConfigured()) return null;
   const [expiry, nonce, signature] = token.split(".");
   if (!(
     expiry &&
     nonce &&
     signature &&
+    nonce.split("~")[1] === "staff" &&
     Number(expiry) > Date.now() &&
     equal(signature, sign(expiry + "." + nonce))
   ))
-    return false;
-  return ((await readCabState()).sessions?.[hash(token)] || 0) > Date.now();
+    return null;
+  if (cabStorageMode() === "mysql") {
+    const [rows] = await getDatabasePool().execute<RowDataPacket[]>("SELECT u.role, u.email FROM cab_admin_sessions s JOIN users u ON u.user_id = s.user_id WHERE s.session_hash = ? AND s.expires_at > UTC_TIMESTAMP(3) AND u.is_active = TRUE", [hash(token)]);
+    return rows[0] && isAllowedAdminEmail(rows[0].email) ? staffRole(rows[0].role) : null;
+  }
+  return null;
 }
-export async function registerCabSession(token: string) {
+async function currentAdminRole() { return validateAdminSession((await cookies()).get("cab_ops_session")?.value || ""); }
+export async function hasCabAdmin() { return (await currentAdminRole()) !== null; }
+export async function registerCabSession(token: string, userId?: string) {
+  if (cabStorageMode() === "mysql") {
+    if (!userId) throw new CabError("An individual admin account is required.", 401);
+    await getDatabasePool().execute("INSERT INTO cab_admin_sessions (session_hash, user_id, expires_at) VALUES (?, ?, ?)", [hash(token), userId, new Date(Number(token.split(".")[0]))]);
+    return;
+  }
   await changeCabState((state) => {
     state.sessions ||= {};
     for (const [key, expiry] of Object.entries(state.sessions))
@@ -63,6 +76,10 @@ export async function registerCabSession(token: string) {
   });
 }
 export async function revokeCabSession(token: string) {
+  if (cabStorageMode() === "mysql") {
+    if (token) await getDatabasePool().execute("DELETE FROM cab_admin_sessions WHERE session_hash = ?", [hash(token)]);
+    return;
+  }
   if (token)
     await changeCabState((state) => {
       if (state.sessions) delete state.sessions[hash(token)];
@@ -71,6 +88,25 @@ export async function revokeCabSession(token: string) {
 export async function requireCabAdmin() {
   if (!(await hasCabAdmin()))
     throw new CabError("Sign in to cab operations.", 401);
+}
+export async function cabAdminRole(): Promise<CabRole> {
+  const role = await currentAdminRole();
+  if (!role) throw new CabError("Sign in with your admin account.", 401);
+  return role;
+}
+export async function requireCabPermission(permission: "read" | "dispatch" | "finance" | "settings") {
+  const role = await cabAdminRole();
+  const allowed = permission === "read" || role === "OWNER" || (permission === "dispatch" && role === "DISPATCHER") || (permission === "finance" && role === "ACCOUNTANT");
+  if (!allowed) throw new CabError("Your operations role does not permit this action.", 403);
+  return role;
+}
+/** Existing staff session remains the authorization source; identity is for audited operations. */
+export async function cabOperationsActor(permission:"read"|"dispatch"|"finance"|"settings") {
+  const role=await requireCabPermission(permission);
+  const token=(await cookies()).get("cab_ops_session")?.value||"";
+  const [rows]=await getDatabasePool().execute<RowDataPacket[]>("SELECT user_id FROM cab_admin_sessions WHERE session_hash=? AND expires_at>UTC_TIMESTAMP(3)",[hash(token)]);
+  if(!rows[0]?.user_id)throw new CabError("An individual administrator session is required.",401);
+  return {userId:String(rows[0].user_id),role};
 }
 export function requireSameOrigin(request: Request) {
   const origin = request.headers.get("origin");
@@ -120,6 +156,20 @@ export async function limitRequest(
   const ip =
     request.headers.get("x-forwarded-for")?.split(",")[0].trim() || "local";
   const key = hash(action + ":" + ip);
+  if (cabStorageMode() === "mysql") {
+    const connection = await getDatabasePool().getConnection();
+    try {
+      await connection.beginTransaction();
+      const now = new Date(), until = new Date(now.getTime() + windowMs);
+      await connection.execute("INSERT INTO cab_rate_limits (bucket_key, request_count, expires_at) VALUES (?, 0, ?) ON DUPLICATE KEY UPDATE bucket_key=VALUES(bucket_key)", [key, until]);
+      const [rows] = await connection.execute<RowDataPacket[]>("SELECT request_count, expires_at FROM cab_rate_limits WHERE bucket_key=? FOR UPDATE", [key]);
+      const expired = new Date(rows[0].expires_at).getTime() <= now.getTime();
+      if (!expired && Number(rows[0].request_count) >= maximum) throw new CabError("Too many requests. Please try again shortly.", 429);
+      await connection.execute("UPDATE cab_rate_limits SET request_count=?, expires_at=? WHERE bucket_key=?", [expired ? 1 : Number(rows[0].request_count) + 1, expired ? until : rows[0].expires_at, key]);
+      await connection.commit();
+    } catch(e) { await connection.rollback(); throw e; } finally { connection.release(); }
+    return;
+  }
   await changeCabState((state) => {
     const now = Date.now();
     for (const [k, v] of Object.entries(state.limits))

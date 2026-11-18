@@ -19,6 +19,7 @@ import {
   type CabJourney,
   type CabRoute,
   type CabVehicle,
+  type PublicCabBooking,
 } from "@/lib/cab/types";
 import { PlacePicker } from "./PlacePicker";
 import { FareDetails } from "./CabBookingFlow";
@@ -413,6 +414,7 @@ function RouteEditor({
       });
       update({
         distanceKm: data.route.distanceKm,
+        geometry: data.route.geometry,
         durationMinutes: data.route.durationMinutes,
         returnDistanceKm: data.route.returnDistanceKm ?? null,
         returnDurationMinutes: data.route.returnDurationMinutes ?? null,
@@ -454,6 +456,7 @@ function RouteEditor({
     <form
       onSubmit={(e) => {
         e.preventDefault();
+        if (r.status === "active" && !fare) { setError("Preview the server-calculated fare before saving an active route."); return; }
         void onSave("routes", r).catch(() => {});
       }}
     >
@@ -706,6 +709,8 @@ function VehicleImageInput({
   onChange: (value: string) => void;
 }) {
   const [preview, setPreview] = useState<CabImagePreview>();
+  const [upload, setUpload] = useState<File>();
+  const [uploading, setUploading] = useState(false);
   const ref = useRef<CabImagePreview | undefined>(undefined);
   const [error, setError] = useState("");
   useEffect(() => () => ref.current?.dispose(), []);
@@ -715,6 +720,7 @@ function VehicleImageInput({
         <span>Existing image asset</span>
         <select value={value} onChange={(e) => onChange(e.target.value)}>
           <option value="">No image</option>
+          {value.startsWith("/api/cab/media/") && <option value={value}>Uploaded vehicle image</option>}
           {["sedan", "suv", "luxury", "tempo-traveller"].map((name) => (
             <option key={name} value={`/images/vehicles/${name}.webp`}>
               {name}
@@ -735,6 +741,7 @@ function VehicleImageInput({
               ref.current?.dispose();
               ref.current = p;
               setPreview(p);
+              setUpload(f);
               setError("");
             } catch (e) {
               setError((e as Error).message);
@@ -757,6 +764,8 @@ function VehicleImageInput({
           </p>
         </>
       )}
+      {upload && <button type="button" className="cb-btn" disabled={uploading} onClick={async () => { setUploading(true); setError(""); try { const response = await fetch("/api/cab/admin/upload-image", { method: "POST", headers: { "Content-Type": upload.type }, body: upload }); const result = await response.json(); if (!response.ok) throw Error(result.error || "Upload failed."); onChange(result.url); setUpload(undefined); } catch(e) { setError((e as Error).message); } finally { setUploading(false); } }}>{uploading ? "Uploading…" : "Upload to durable vehicle storage"}</button>}
+      {value.startsWith("/api/cab/media/") && <p className="cb-note">Vehicle image stored on the server. Save the vehicle to link this image.</p>}
       {error && (
         <p className="cb-inline-error" role="alert">
           {error}
@@ -788,6 +797,7 @@ function VehicleEditor({
     >
       <h2>Vehicle details</h2>
       <div className="cb-fields">
+        <label><span>Air conditioning</span><select value={v.airConditioning || "unspecified"} onChange={e => update({ airConditioning: e.target.value as ManagedVehicle["airConditioning"] })}><option value="unspecified">Not specified</option><option value="ac">AC</option><option value="non-ac">Non-AC</option></select></label>
         <label>
           <span>Display name</span>
           <input
@@ -937,6 +947,9 @@ function DriverEditor({
     >
       <h2>Driver details</h2>
       <div className="cb-fields">
+        <label><span>Email (optional, for assignment notifications)</span><input type="email" value={d.email || ""} onChange={e => update({ email: e.target.value })}/></label>
+        <label><span>Licence reference (only when required)</span><input maxLength={100} value={d.license || ""} onChange={e => update({ license: e.target.value })}/></label>
+        <label><span>Licence expiry</span><input type="date" value={d.licenseExpiry || ""} onChange={e => update({ licenseExpiry: e.target.value })}/></label>
         <label>
           <span>Full name</span>
           <input
@@ -1010,11 +1023,13 @@ export function CabEntityManager({
   operations,
   onSave,
   busy,
+  bookings = [],
 }: {
   kind: "routes" | "vehicles" | "drivers";
   operations: CabOperationsData;
   onSave: SaveEntity;
   busy: boolean;
+  bookings?: PublicCabBooking[];
 }) {
   const [selected, setSelected] = useState("");
   const [draft, setDraft] = useState<
@@ -1093,7 +1108,7 @@ export function CabEntityManager({
                 : "Driver management"}
           </h2>
           <p className="cb-note">
-            Development records only. Create, edit and change operational status
+            Create, edit and change operational status
             below.
           </p>
         </div>
@@ -1143,6 +1158,7 @@ export function CabEntityManager({
           )}
         </section>
         <section className="cb-main-card">
+          {value && kind !== "routes" && <details className="cb-resource-history"><summary>Assignments and booking history</summary>{bookings.filter(b => kind === "drivers" ? b.assignment?.driverId === value.id : b.assignment?.vehicleId === value.id).map(b => <p key={b.id}>{b.id} · {b.status}<small>{b.journey.departure.replace("T", " ")} IST · {b.assignment?.driver} · {b.assignment?.vehicle}</small></p>)}</details>}
           {value ? (
             kind === "routes" ? (
               <RouteEditor
@@ -1195,7 +1211,7 @@ export function CabSettingsEditor({
   onSave: SaveEntity;
   busy: boolean;
 }) {
-  const [s, setSettings] = useState(operations.settings);
+  const [s, setSettings] = useState({ ...operations.settings, payments: operations.settings.payments || { full: false, advance: false, advanceType: "percent" as const, advanceValue: 25, payLater: false } });
   return (
     <section className="cb-main-card">
       <form
@@ -1205,6 +1221,8 @@ export function CabSettingsEditor({
         }}
       >
         <h2>Cab settings</h2>
+        <p className="cb-note">New commercial quotations use the hybrid advance policy above and an explicit request in the booking. The legacy advance option and value below apply to older bookings without commercial history. Full-payment and pay-later controls retain their existing meaning.</p><fieldset className="cb-check-grid"><legend>Approved payment options</legend>{([['full', 'Full payment'], ['advance', 'Legacy advance option'], ['payLater', 'Pay later']] as const).map(([key,label]) => <label key={key}><input type="checkbox" checked={s.payments[key]} onChange={e => setSettings({ ...s, payments: { ...s.payments, [key]: e.target.checked } })}/>{label}</label>)}</fieldset>
+        <div className="cb-fields"><label><span>Legacy advance calculation</span><select value={s.payments.advanceType} onChange={e => setSettings({ ...s, payments: { ...s.payments, advanceType: e.target.value as "percent" | "fixed" } })}><option value="percent">Percentage of final fare</option><option value="fixed">Fixed amount · INR</option></select></label><NumberField label="Legacy advance value" value={s.payments.advanceValue} onChange={n => setSettings({ ...s, payments: { ...s.payments, advanceValue: n || 1 } })}/><label><span>Cancellation rules</span><textarea maxLength={3000} value={s.cancellationPolicy || ""} onChange={e => setSettings({ ...s, cancellationPolicy: e.target.value })}/></label></div><p className="cb-note">Options apply only to confirmed bookings. The backend calculates amounts and prevents overpayment. Gateway credentials and live activation remain server-only.</p>
         <fieldset className="cb-check-grid">
           <legend>Enabled customer trip types</legend>
           {Object.entries(tripLabels).map(([key, label]) => (
@@ -1262,6 +1280,7 @@ export function CabSettingsEditor({
         </label>
         <fieldset className="cb-check-grid">
           <legend>Email notification preferences</legend>
+          <label><input type="checkbox" checked={s.notifications.driver || false} onChange={e => setSettings({ ...s, notifications: { ...s.notifications, driver: e.target.checked } })}/>Driver assignment emails</label>
           <label>
             <input
               type="checkbox"
@@ -1320,7 +1339,7 @@ export function CabSettingsEditor({
         <dl className="cb-details">
           <div>
             <dt>Repository</dt>
-            <dd>In-memory development mock · not persistent</dd>
+            <dd>Server-selected cab repository; see workspace header for active storage.</dd>
           </div>
           <div>
             <dt>Road provider</dt>
@@ -1339,7 +1358,7 @@ export function CabSettingsEditor({
           <div>
             <dt>Razorpay</dt>
             <dd>
-              {integrations.payments.mode} · live disabled
+              {integrations.payments.mode} · {integrations.payments.liveEnabled ? "live enabled" : "live disabled"}
               <br />
               {integrations.payments.reason}
             </dd>
@@ -1370,7 +1389,7 @@ export function CabNotificationViewer({
   return (
     <div className="cb-operations-grid">
       <section className="cb-main-card cb-notification-list">
-        <h2>Email previews & delivery log</h2>
+        <h2>Notifications &amp; email delivery log</h2>
         <p className="cb-note">
           Preview means rendered only, not sent. No email retry sends messages
           automatically.

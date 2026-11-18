@@ -1,0 +1,44 @@
+[
+  {
+    "id": "holiday-planning",
+    "enabled": true,
+    "title": "Your next chapter",
+    "message": "Explore holiday ideas and plan a journey around you.",
+    "label": "Travel inspiration",
+    "buttonText": "Explore holidays",
+    "link": "/holidays",
+    "priority": 1,
+    "startDate": null,
+    "endDate": null,
+    "displayDuration": 10,
+    "repeatAfter": 3600
+  },
+  {
+    "id": "cab-planning",
+    "enabled": true,
+    "title": "Take the scenic route",
+    "message": "Plan an airport transfer or an outstation journey with our team.",
+    "label": "Cab journeys",
+    "buttonText": "Explore cabs",
+    "link": "/cabs",
+    "priority": 2,
+    "startDate": null,
+    "endDate": null,
+    "displayDuration": 10,
+    "repeatAfter": 3600
+  },
+  {
+    "id": "bus-booking",
+    "enabled": true,
+    "title": "Take the enjoyable route",
+    "message": "Plan an stress free and comfortable travel journey with your family.",
+    "label": "Bus journeys",
+    "buttonText": "Explore buses",
+    "link": "/bus",
+    "priority": 3,
+    "startDate": null,
+    "endDate": null,
+    "displayDuration": 10,
+    "repeatAfter": 3600
+  }
+]

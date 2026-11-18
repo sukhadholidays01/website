@@ -1,5 +1,6 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
+import { persistConsents } from "./guest-repository";
 import type { PoolConnection, RowDataPacket } from "mysql2/promise";
 import { getDatabasePool } from "@/lib/db";
 import type {
@@ -200,8 +201,13 @@ async function loadState(connection: PoolConnection): Promise<CabState> {
     });
     paymentsByBooking.set(id, payments);
   }
+  const [commercialRows]=await connection.query<DbRow[]>("SELECT booking_id,commercial_payload FROM cab_booking_commercial");
+  const commercial=new Map(commercialRows.map(row=>[String(row.booking_id),json<NonNullable<CabBooking["commercial"]>>(row.commercial_payload)]));
+  const [contextRows]=await connection.query<DbRow[]>("SELECT payment_attempt_id,context_payload FROM cab_payment_context");
+  const contexts=new Map(contextRows.map(row=>[String(row.payment_attempt_id),json<NonNullable<PaymentAttempt["context"]>>(row.context_payload)]));
   const bookings: CabBooking[] = bookingRows.map((row) => ({
     id: String(row.booking_id),
+    ...(commercial.has(String(row.booking_id))?{commercial:commercial.get(String(row.booking_id))}:{}),
     customerId: String(row.customer_id),
     accessHash: String(row.access_token_hash),
     requestKey: String(row.request_key),
@@ -235,6 +241,7 @@ async function loadState(connection: PoolConnection): Promise<CabState> {
   operations.paymentAttempts = attemptRows.map(
     (row): PaymentAttempt => ({
       id: String(row.payment_attempt_id),
+      ...(contexts.has(String(row.payment_attempt_id))?{context:contexts.get(String(row.payment_attempt_id))}:{}),
       bookingId: String(row.booking_id),
       amount: Number(row.amount),
       amountPaise: Number(row.amount_paise),
@@ -296,7 +303,35 @@ async function loadState(connection: PoolConnection): Promise<CabState> {
     ]),
   );
 
-  return { config, bookings, limits, sessions, operations };
+  const [driverRows2] = await connection.query<DbRow[]>("SELECT session_hash, booking_id, driver_id, expires_at, revoked FROM cab_driver_sessions");
+  const driverSessions = Object.fromEntries(driverRows2.map(r => [String(r.session_hash), { bookingId: String(r.booking_id), driverId: String(r.driver_id), expiresAt: iso(r.expires_at), revoked: Boolean(r.revoked) }]));
+  const [locationRows] = await connection.query<DbRow[]>("SELECT booking_id, driver_id, latitude, longitude, accuracy_metres, recorded_at FROM cab_booking_locations");
+  const locations = Object.fromEntries(locationRows.map(r => [String(r.booking_id), { driverId: String(r.driver_id), lat: Number(r.latitude), lon: Number(r.longitude), accuracy: Number(r.accuracy_metres), at: iso(r.recorded_at) }]));
+  const [auditRows] = await connection.query<DbRow[]>("SELECT event_id, actor_role, action, entity_id, created_at FROM cab_audit_log ORDER BY created_at DESC LIMIT 200");
+  const audit = auditRows.map(r => ({ id: String(r.event_id), role: String(r.actor_role), action: String(r.action), entityId: String(r.entity_id), at: iso(r.created_at) }));
+  const [refundRows] = await connection.query<DbRow[]>("SELECT request_id, payment_attempt_id, provider_refund_id, status, amount_paise, reason, created_at FROM cab_refund_requests");
+  const refunds = refundRows.map(r => ({ id: String(r.request_id), attemptId: String(r.payment_attempt_id), ...(r.provider_refund_id ? { providerId: String(r.provider_refund_id) } : {}), status: String(r.status), amountPaise: Number(r.amount_paise), reason: String(r.reason), at: iso(r.created_at) }));
+  return { config, bookings, limits, sessions, operations, driverSessions, locations, audit, refunds };
+}
+
+async function persistExtensions(connection: PoolConnection, state: CabState, previous: CabState) {
+  for (const [key, s] of Object.entries(state.driverSessions || {})) {
+    if (JSON.stringify(s) === JSON.stringify(previous.driverSessions?.[key])) continue;
+    await connection.execute("INSERT INTO cab_driver_sessions (session_hash, booking_id, driver_id, expires_at, revoked) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE revoked=VALUES(revoked)", [key, s.bookingId, s.driverId, dbDate(s.expiresAt), s.revoked]);
+  }
+  for(const id of Object.keys(previous.locations||{}))if(!state.locations?.[id])await connection.execute("DELETE FROM cab_booking_locations WHERE booking_id=?",[id]);
+  for (const [id, l] of Object.entries(state.locations || {})) {
+    if (JSON.stringify(l) === JSON.stringify(previous.locations?.[id])) continue;
+    await connection.execute("INSERT INTO cab_booking_locations (booking_id, driver_id, latitude, longitude, accuracy_metres, recorded_at) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE driver_id=VALUES(driver_id), latitude=VALUES(latitude), longitude=VALUES(longitude), accuracy_metres=VALUES(accuracy_metres), recorded_at=VALUES(recorded_at)", [id, l.driverId, l.lat, l.lon, l.accuracy, dbDate(l.at)]);
+  }
+  for (const a of state.audit || []) {
+    if (previous.audit?.some(p => p.id === a.id)) continue;
+    await connection.execute("INSERT INTO cab_audit_log (event_id, actor_role, action, entity_id, created_at) VALUES (?, ?, ?, ?, ?)", [a.id, a.role, a.action, a.entityId, dbDate(a.at)]);
+  }
+  for (const r of state.refunds || []) {
+    if (previous.refunds?.some(p => p.id === r.id && JSON.stringify(p) === JSON.stringify(r))) continue;
+    await connection.execute("INSERT INTO cab_refund_requests (request_id, payment_attempt_id, provider_refund_id, status, amount_paise, reason, created_at) VALUES (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE provider_refund_id=VALUES(provider_refund_id), status=VALUES(status)", [r.id, r.attemptId, r.providerId || null, r.status, r.amountPaise, r.reason, dbDate(r.at)]);
+  }
 }
 
 async function persistSettings(
@@ -316,13 +351,14 @@ async function persistSettings(
 async function persistOperations(
   connection: PoolConnection,
   state: CabState,
+  previous?: CabState,
 ): Promise<void> {
-  await persistSettings(connection, state);
-  await connection.execute(
-    "UPDATE fare_configurations SET is_active = FALSE WHERE is_active = TRUE",
-  );
+  if (!previous || JSON.stringify([state.config, state.operations.settings, state.operations.revision]) !== JSON.stringify([previous.config, previous.operations.settings, previous.operations.revision]))
+    await persistSettings(connection, state);
 
   for (const route of state.operations.routes) {
+    if (previous?.operations.routes.some(r => r.id === route.id && JSON.stringify(r) === JSON.stringify(route))) continue;
+    await connection.execute("UPDATE fare_configurations SET is_active = FALSE WHERE route_id = ?", [route.id]);
     const { fares, roundTripFares, ...routePayload } = route;
     await connection.execute(
       `INSERT INTO cab_routes
@@ -369,6 +405,7 @@ async function persistOperations(
   }
 
   for (const vehicle of state.operations.vehicles) {
+    if (previous?.operations.vehicles.some(v => v.id === vehicle.id && JSON.stringify(v) === JSON.stringify(vehicle))) continue;
     await connection.execute(
       `INSERT INTO vehicles
         (vehicle_id, category_id, name, model, registration, seats, luggage, availability, is_active, route_ids, private_notes, vehicle_payload)
@@ -396,6 +433,7 @@ async function persistOperations(
   }
 
   for (const driver of state.operations.drivers) {
+    if (previous?.operations.drivers.some(d => d.id === driver.id && JSON.stringify(d) === JSON.stringify(driver))) continue;
     await connection.execute(
       `INSERT INTO drivers
         (driver_id, name, phone, is_approved, is_active, availability, private_notes, driver_payload)
@@ -514,6 +552,11 @@ async function persistBookings(
        ON DUPLICATE KEY UPDATE is_primary = VALUES(is_primary)`,
       [randomUUID(), booking.id, customerId],
     );
+    if(booking.commercial)await connection.execute("INSERT INTO cab_booking_commercial (booking_id,commercial_payload) VALUES (?,?) ON DUPLICATE KEY UPDATE commercial_payload=VALUES(commercial_payload)",[booking.id,JSON.stringify(booking.commercial)]);
+    if (booking.policyAcceptances) {
+      await persistConsents(connection,booking.id,customerId,booking.policyAcceptances);
+      await connection.execute("INSERT IGNORE INTO cab_guest_state (booking_id,original_link_expires_at,document_policy,created_at) VALUES (?,DATE_ADD(?,INTERVAL 30 DAY),?,UTC_TIMESTAMP(3))",[booking.id,dbDate(booking.createdAt),JSON.stringify(booking.documentPolicy||{})]);
+    }
 
     for (const [index, event] of booking.history.entries()) {
       await connection.execute(
@@ -620,7 +663,7 @@ async function persistPaymentAttempts(
          provider, order_id, provider_payment_id, event_ids, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON DUPLICATE KEY UPDATE amount = VALUES(amount), amount_paise = VALUES(amount_paise),
-         attempt_status = VALUES(attempt_status), provider_payment_id = VALUES(provider_payment_id),
+         attempt_status = VALUES(attempt_status), order_id=VALUES(order_id), provider_payment_id = VALUES(provider_payment_id),
          event_ids = VALUES(event_ids), updated_at = VALUES(updated_at)`,
       [
         attempt.id,
@@ -637,13 +680,18 @@ async function persistPaymentAttempts(
         dbDate(attempt.updatedAt),
       ],
     );
+    if(attempt.context)await connection.execute("INSERT IGNORE INTO cab_payment_context (payment_attempt_id,booking_id,context_payload) VALUES (?,?,?)",[attempt.id,attempt.bookingId,JSON.stringify(attempt.context)]);
   }
 }
 
 async function persistLimitsAndSessions(
   connection: PoolConnection,
   state: CabState,
+  previous: CabState,
 ): Promise<void> {
+  for (const key of Object.keys(previous.sessions || {})) {
+    if (!(key in (state.sessions || {}))) await connection.execute("DELETE FROM cab_admin_sessions WHERE session_hash = ?", [key]);
+  }
   await connection.execute(
     "DELETE FROM cab_rate_limits WHERE expires_at < UTC_TIMESTAMP(3)",
   );
@@ -651,6 +699,7 @@ async function persistLimitsAndSessions(
     "DELETE FROM cab_admin_sessions WHERE expires_at < UTC_TIMESTAMP(3)",
   );
   for (const [key, limit] of Object.entries(state.limits)) {
+    if (JSON.stringify(previous.limits[key]) === JSON.stringify(limit)) continue;
     await connection.execute(
       `INSERT INTO cab_rate_limits (bucket_key, request_count, expires_at)
        VALUES (?, ?, ?)
@@ -659,6 +708,7 @@ async function persistLimitsAndSessions(
     );
   }
   for (const [key, expiry] of Object.entries(state.sessions || {})) {
+    if (previous.sessions?.[key] === expiry) continue;
     await connection.execute(
       `INSERT INTO cab_admin_sessions (session_hash, expires_at)
        VALUES (?, ?)
@@ -693,18 +743,21 @@ export const mysqlCabRepository: CabRepository = {
         "SELECT lock_id FROM cab_state_lock WHERE lock_id = 1 FOR UPDATE",
       );
       const draft = await loadState(connection);
+      const previous = structuredClone(draft);
       const result = operation(draft);
-      await persistOperations(connection, draft);
-      await persistBookings(connection, draft);
+      await persistOperations(connection, draft, previous);
+      const changed = <T extends { id: string }>(next: T[], old: T[]) => next.filter(item => !old.some(p => p.id === item.id && JSON.stringify(p) === JSON.stringify(item)));
+      await persistBookings(connection, { ...draft, bookings: changed(draft.bookings, previous.bookings) });
       await persistPaymentAttempts(
         connection,
-        draft.operations.paymentAttempts,
+        changed(draft.operations.paymentAttempts, previous.operations.paymentAttempts),
       );
       await persistNotifications(
         connection,
-        draft.operations.notifications,
+        changed(draft.operations.notifications, previous.operations.notifications),
       );
-      await persistLimitsAndSessions(connection, draft);
+      await persistLimitsAndSessions(connection, draft, previous);
+      await persistExtensions(connection, draft, previous);
       await connection.execute(
         "UPDATE cab_state_lock SET revision = revision + 1 WHERE lock_id = 1",
       );

@@ -1,39 +1,74 @@
-'use client';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { LayoutDashboard, CalendarDays, Inbox, Route, NotebookPen, Users, ContactRound, Car, Palmtree, MapPin, Hotel, Plane, Bus, Navigation, Tags, Wallet, Files, MessageSquare, ChartNoAxesCombined, ShieldCheck, Settings, History, LogOut, Menu, X, ArrowUpRight, Compass } from 'lucide-react';
-import { AdminProvider, useAdmin } from './AdminProvider';
-import { Breadcrumbs, NotificationToast } from './ui';
-import type { Role } from '@/types/admin';
-const navigation = [['', 'Dashboard', LayoutDashboard], ['bookings', 'Bookings', CalendarDays], ['enquiries', 'Enquiries', Inbox], ['trips', 'Trips', Route], ['itineraries', 'Itineraries', NotebookPen], ['customers', 'Customers', Users], ['drivers', 'Drivers', ContactRound], ['vehicles', 'Vehicles', Car], ['packages', 'Holiday Packages', Palmtree], ['destinations', 'Destinations', MapPin], ['hotels', 'Hotels', Hotel], ['flights', 'Flights', Plane], ['bus', 'Bus', Bus], ['cabs', 'Cabs', Car], ['custom-routes', 'Custom Routes', Navigation], ['offers', 'Offers', Tags], ['payments', 'Payments', Wallet], ['documents', 'Documents', Files], ['reviews', 'Reviews', MessageSquare], ['reports', 'Reports', ChartNoAxesCombined], ['users', 'Users & Roles', ShieldCheck], ['settings', 'Settings', Settings], ['activity', 'Activity Log', History]] as const;
-export function AdminSidebar({ onNavigate }: {
-    onNavigate: () => void;
-}) { const pathname = usePathname(); const { role, can, logout } = useAdmin(); const router = useRouter(); return <><Link href="/admin" className="a-brand" onClick={onNavigate}><span><Compass size={27}/></span><div><strong>Sukhad Holidays</strong><small>Travel Operations</small></div></Link><div className="a-nav-label">WORKSPACE</div><nav aria-label="Admin navigation" className="a-nav">{navigation.filter(([key]) => can(key || 'dashboard')).map(([key, title, Icon]) => <Link key={key} href={'/admin' + (key ? '/' + key : '')} onClick={onNavigate} aria-current={pathname === '/admin' + (key ? '/' + key : '') ? 'page' : undefined} className={(key ? pathname.startsWith('/admin/' + key) : pathname === '/admin') ? 'active' : ''}><Icon size={17}/><span>{title}</span></Link>)}</nav><div className="a-profile"><span className="a-avatar">AD</span><div><strong>Demo Admin</strong><small>{role.replaceAll('_', ' ')}</small></div><button aria-label="Logout of demo session" onClick={() => { logout(); router.push('/admin/login'); }}><LogOut size={17}/></button></div></>; }
-export function AdminHeader({ onMenu }: {
-    onMenu: () => void;
-}) { const pathname = usePathname(); return <header className="a-header"><div className="a-header-left"><button className="a-menu-toggle" onClick={onMenu} aria-label="Open admin navigation"><Menu size={22}/></button><Breadcrumbs items={['Workspace', navigation.find(([key]) => key && pathname.startsWith('/admin/' + key))?.[1] || 'Dashboard']}/></div><div className="a-header-right"><span className="a-demo">LOCAL DEMO</span><Link href="/" target="_blank">View website <ArrowUpRight size={14}/></Link></div></header>; }
-function AdminBoundary({ children }: {
-    children: React.ReactNode;
-}) { const { ready, session, can, toast } = useAdmin(); const path = usePathname(); const router = useRouter(); const [drawer, setDrawer] = useState(false); const login = path === '/admin/login'; useEffect(() => { if (ready && !session && !login)
-    router.replace('/admin/login'); }, [ready, session, login, router]); const close = () => setDrawer(false); useEffect(() => { if (!drawer)
-    return; const previous = document.activeElement as HTMLElement; const overflow = document.body.style.overflow; document.body.style.overflow = 'hidden'; const timer = setTimeout(() => document.querySelector<HTMLElement>('.a-mobile-drawer button')?.focus(), 0); const key = (e: KeyboardEvent) => { if (e.key === 'Escape')
-    setDrawer(false); if (e.key === 'Tab') {
-    const nodes = document.querySelectorAll<HTMLElement>('.a-mobile-drawer button, .a-mobile-drawer a');
-    const first = nodes[0], last = nodes[nodes.length - 1];
-    if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-    }
-    else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-    }
-} }; document.addEventListener('keydown', key); return () => { clearTimeout(timer); document.body.style.overflow = overflow; document.removeEventListener('keydown', key); previous?.focus(); }; }, [drawer]); if (login)
-    return <div className="admin-root">{children}</div>; if (!ready || !session)
-    return <div className="admin-root a-loading" role="status">Opening demo workspace…</div>; const currentModule = path.split('/')[2] || 'dashboard'; return <div className="admin-root"><aside className="a-desktop-sidebar"><AdminSidebar onNavigate={close}/></aside><AnimatePresence>{drawer && <div className="a-drawer-backdrop" onClick={close}><motion.aside className="a-mobile-drawer" role="dialog" aria-modal="true" aria-label="Admin navigation" initial={{ x: -260 }} animate={{ x: 0 }} exit={{ x: -260 }} transition={{ duration: .2 }} onClick={e => e.stopPropagation()}><button className="a-drawer-close" onClick={close} aria-label="Close navigation"><X size={22}/></button><AdminSidebar onNavigate={close}/></motion.aside></div>}</AnimatePresence><div className="a-workspace"><AdminHeader onMenu={() => setDrawer(true)}/><main id="main-content" className="a-main"><div className="a-demo-banner"><span className="a-dot"/> Demo workspace · fictional records · changes saved in this browser. Authentication is not connected.</div>{can(currentModule) ? children : <div className="a-panel a-empty"><h1>Access limited for this demo role</h1><p>Choose an authorized module from the sidebar.</p><Link href="/admin/login" className="a-btn">Change demo role</Link></div>}</main></div><NotificationToast message={toast}/></div>; }
-export function AdminShell({ children }: {
-    children: React.ReactNode;
-}) { const pathname=usePathname(); if(pathname.startsWith('/admin/cab-operations')) return <>{children}</>; return <AdminProvider><AdminBoundary>{children}</AdminBoundary></AdminProvider>; }
-export function AdminLogin() { const { login, db } = useAdmin(); const router = useRouter(); const [role, setRole] = useState<Role>('SUPER_ADMIN'); const [driver, setDriver] = useState('driver-1'); return <main id="main-content" className="a-login"><div className="a-login-art"><Compass size={54}/><h1>Every journey,<br />carefully managed.</h1><p>Sukhad Holidays<br />Travel Operations</p></div><div className="a-login-card"><span className="a-demo">DEMO ACCESS</span><h1>Welcome to operations</h1><p>This preview uses a browser-only demo session. No passwords, identity verification or secure authentication are implemented.</p><form onSubmit={e => { e.preventDefault(); login(role, driver); router.push(role === 'DRIVER' ? '/admin/trips' : '/admin'); }}><label className="a-field"><span>Explore as</span><select value={role} onChange={e => setRole(e.target.value as Role)}>{['SUPER_ADMIN', 'OPERATIONS_MANAGER', 'BOOKING_EXECUTIVE', 'ACCOUNTANT', 'DRIVER'].map(r => <option key={r}>{r}</option>)}</select></label>{role === 'DRIVER' && <label className="a-field"><span>Demo driver profile</span><select value={driver} onChange={e => setDriver(e.target.value)}>{db.collections.drivers.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}</select></label>}<button className="a-btn a-primary" type="submit">Enter demo workspace <ArrowUpRight size={17}/></button></form><Link href="/">Return to public website</Link><small>Production readiness requires server-side authentication, permission checks and an audit trail.</small></div></main>; }
+﻿"use client";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { LayoutDashboard, Car, Inbox, NotebookPen, Users, Palmtree, MapPin, Plane, Bus, Navigation, Tags, Files, MessageSquare, ChartNoAxesCombined, ShieldCheck, Settings, History, LogOut, Menu, X, ArrowUpRight, Compass, Wallet, ContactRound, CalendarDays, Route, Hotel } from "lucide-react";
+import { CustomerActivity } from "./CustomerActivity";
+import { AdminProvider, useAdmin } from "./AdminProvider";
+import { AdminSessionProvider, useAdminSession } from "./AdminSessionProvider";
+import { Breadcrumbs, ConfirmDialog, EmptyState, LoadingState } from "./ui";
+
+const operational = [["dashboard","Dashboard",LayoutDashboard],["bookings","Bookings & quotations",CalendarDays],["routes","Routes & fares",Route],["drivers","Drivers",ContactRound],["vehicles","Vehicles",Car],["payments","Payments",Wallet],["tracking","Trip tracking",MapPin],["notifications","Notifications & email log",Inbox],["settings","Cab settings",Settings]] as const;
+const demos = [["enquiries","Enquiries",Inbox],["trips","Travel trips",Route],["itineraries","Itineraries",NotebookPen],["packages","Holiday packages",Palmtree],["destinations","Destinations",MapPin],["hotels","Hotels",Hotel],["flights","Flight enquiries",Plane],["bus","Bus enquiries",Bus],["custom-routes","Custom routes",Navigation],["offers","Offers",Tags],["documents","Documents",Files],["reviews","Reviews",MessageSquare],["reports","Reports",ChartNoAxesCombined],["users","Users & roles",ShieldCheck],["activity","Activity",History]] as const;
+const isOperational = (path: string) => path === "/admin" || path.startsWith("/admin/cab-operations") || path.startsWith("/admin/customers");
+const demoLabel = (path: string) => demos.find(([key]) => path.startsWith("/admin/"+key))?.[1] || "Demo workspace";
+
+function Sidebar({ onNavigate }: { onNavigate: () => void }) {
+  const path = usePathname(), { role, logout, signingOut } = useAdminSession();
+  const [confirm, setConfirm] = useState(false);
+  const close = useCallback(() => setConfirm(false), []);
+  return <>
+    <Link href="/admin" className="a-brand" onClick={onNavigate}><span><Compass size={27}/></span><div><strong>Sukhadh Holidays</strong><small>Travel operations</small></div></Link>
+    <div className="a-nav-label">CAB OPERATIONS · DATABASE</div>
+    <nav aria-label="Operational navigation" className="a-nav">
+      {operational.map(([key,label,Icon]) => <Link key={key} href={key === "dashboard" ? "/admin" : "/admin/cab-operations?view="+key} onClick={onNavigate} aria-current={key==="dashboard" && path==="/admin" ? "page" : undefined}><Icon size={17}/><span>{label}</span></Link>)}
+      <Link href="/admin/customers" onClick={onNavigate} className={path.startsWith("/admin/customers")?"active":""} aria-current={path.startsWith("/admin/customers")?"page":undefined}><Users size={17}/><span>Customer accounts</span></Link>
+    </nav>
+    <div className="a-nav-label">TRAVEL MODULES · DEMO PREVIEWS</div>
+    <nav aria-label="Demo module navigation" className="a-nav">{demos.map(([key,label,Icon])=><Link key={key} href={"/admin/"+key} onClick={onNavigate} className={path.startsWith("/admin/"+key)?"active":""} aria-current={path.startsWith("/admin/"+key)?"page":undefined}><Icon size={17}/><span>{label}</span><small className="a-nav-preview">Demo</small></Link>)}</nav>
+    <div className="a-profile"><span className="a-avatar"><ShieldCheck size={18}/></span><div><strong>Authenticated admin</strong><small>{role.replaceAll("_"," ")}</small></div><button disabled={signingOut} aria-label="Sign out of admin" onClick={()=>setConfirm(true)}><LogOut size={18}/></button></div>
+    {confirm && <ConfirmDialog title="Sign out of admin?" description="This will revoke your current server session across the admin workspace." confirmLabel={signingOut?"Signing out…":"Sign out"} cancelLabel="Stay signed in" busy={signingOut} onClose={close} onConfirm={()=>{void logout().then(ok=>{if(ok)setConfirm(false);});}}/>}
+  </>;
+}
+function LegacyWorkspace({ children }: { children: ReactNode }) {
+  return <AdminProvider><LegacyContent>{children}</LegacyContent></AdminProvider>;
+}
+function LegacyContent({ children }: { children: ReactNode }) {
+  const { can, ready } = useAdmin(), path = usePathname();
+  if (!ready) return <LoadingState label="Loading demo preview"/>;
+  return <><div className="a-demo-banner" role="note"><span className="a-dot"/><div><strong>Demo module · not connected to MySQL.</strong> These are fictional records. Edits remain in this browser and do not change real bookings, payments or staff access. Use cab operations for real cab records.</div></div>{can(path.split("/")[2] || "dashboard") ? children : <EmptyState title="This preview is unavailable for your role" description="Your existing server role remains in effect. Use an authorised operational module."/>}</>;
+}
+function Workspace({ children }: { children: ReactNode }) {
+  const path = usePathname(), [drawer,setDrawer] = useState(false);
+  const dialog = useRef<HTMLDivElement>(null), trigger = useRef<HTMLButtonElement>(null);
+  const close = useCallback(()=>setDrawer(false),[]);
+  useEffect(()=>{
+    if(!drawer)return;
+    const before=document.activeElement as HTMLElement, overflow=document.body.style.overflow, triggerButton=trigger.current;
+    document.body.style.overflow="hidden"; dialog.current?.focus();
+    const key=(event:KeyboardEvent)=>{
+      if(event.key==="Escape")setDrawer(false);
+      if(event.key!=="Tab")return;
+      const nodes=dialog.current?.querySelectorAll<HTMLElement>('a[href],button:not(:disabled),[tabindex="0"]');
+      if(!nodes?.length)return;const first=nodes[0],last=nodes[nodes.length-1];
+      if(event.shiftKey&&(document.activeElement===first||document.activeElement===dialog.current)){event.preventDefault();last.focus();}
+      else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+    };
+    document.addEventListener("keydown",key);
+    const media=window.matchMedia("(min-width:901px)");const desktop=()=>{if(media.matches)setDrawer(false);};media.addEventListener("change",desktop);
+    return()=>{document.body.style.overflow=overflow;document.removeEventListener("keydown",key);media.removeEventListener("change",desktop);(before?.isConnected?before:triggerButton)?.focus();};
+  },[drawer]);
+  const real=isOperational(path);
+  return <div className="admin-root a-foundation">
+    <aside className="a-desktop-sidebar"><Sidebar onNavigate={close}/></aside>
+    {drawer && <div className="a-drawer-backdrop" onClick={close}><div ref={dialog} tabIndex={-1} className="a-mobile-drawer" role="dialog" aria-modal="true" aria-label="Admin navigation" onClick={e=>e.stopPropagation()}><button className="a-drawer-close" onClick={close} aria-label="Close navigation"><X size={22}/></button><Sidebar onNavigate={close}/></div></div>}
+    <div className="a-workspace"><header className="a-header"><div className="a-header-left"><button ref={trigger} className="a-menu-toggle" onClick={()=>setDrawer(true)} aria-label="Open admin navigation" aria-expanded={drawer}><Menu size={22}/></button><Breadcrumbs items={["Admin",path==="/admin"?"Overview":path.startsWith("/admin/customers")?"Customer accounts":real?"Cab operations":demoLabel(path)]}/></div><div className="a-header-right"><CustomerActivity/><span className={real?"a-data-source":"a-demo"}>{real?"DATABASE RECORDS":"DEMO PREVIEW"}</span><Link href="/" target="_blank" rel="noopener noreferrer">View website <ArrowUpRight size={14}/></Link></div></header>
+      <main id="main-content" className="a-main">{real?children:<LegacyWorkspace>{children}</LegacyWorkspace>}</main>
+    </div>
+  </div>;
+}
+export function AdminShell({ children }: { children: ReactNode }) {
+  const path=usePathname();
+  if(["/admin/login","/admin/forgot-password","/admin/reset-password"].includes(path))return <>{children}</>;
+  return <AdminSessionProvider><Workspace>{children}</Workspace></AdminSessionProvider>;
+}

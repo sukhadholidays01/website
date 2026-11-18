@@ -1,3 +1,4 @@
+import { queueCabEmail } from "./notifications";
 import "server-only";
 import { z } from "zod";
 import {
@@ -16,6 +17,7 @@ import {
 import { lookupCabRoute } from "./maps";
 import { indiaTime, placeSchema } from "./validation";
 import { assignmentWindow } from "./assignments";
+import { auditCab } from "./tracking";
 import type { CabJourney, CabState } from "./types";
 import { cabVehicles } from "./types";
 import {
@@ -110,7 +112,7 @@ export function fleetOptions(
       model: example?.model || "Category not configured",
       seats: Math.max(0, ...vehicles.map((v) => v.seats)),
       luggage: example?.luggage ?? null,
-      amenities: example?.amenities || [],
+      amenities: [...(example?.amenities || []), ...(example?.airConditioning === "ac" ? ["Air conditioned"] : example?.airConditioning === "non-ac" ? ["Non-AC"] : [])],
       image: example?.image || "",
       available: compatible.length > 0,
       development: true,
@@ -143,7 +145,7 @@ export async function publicCatalogue() {
   return {
     mode: cabStorageMode(),
     persistent: cabStorageMode() === "mysql",
-    enabledTripTypes: state.operations.settings.enabledTripTypes,
+    enabledTripTypes: [...new Set([...state.operations.settings.enabledTripTypes, "multi-day" as const])],
     bookingPolicy: state.operations.settings.bookingPolicy,
     routes: state.operations.routes
       .filter((r) => r.status === "active")
@@ -156,7 +158,7 @@ export async function publicCatalogue() {
     fixedAdditionalCharge: state.operations.settings.fixedAdditionalCharge,
   };
 }
-export async function saveOperationalEntity(kind: string, input: unknown) {
+export async function saveOperationalEntity(kind: string, input: unknown, actorId="legacy-service") {
   const body = z
     .object({ revision: z.number().int(), record: z.unknown() })
     .parse(input);
@@ -171,6 +173,7 @@ export async function saveOperationalEntity(kind: string, input: unknown) {
             ? cabSettingsSchema.parse(body.record)
             : null;
   if (!record) throw new CabError("Unknown management section.");
+  if (kind === "settings" && process.env.NODE_ENV === "production" && (record as import("./models").CabSettings).mockPaymentsEnabled) throw new CabError("Mock payment simulation cannot be enabled in production.", 403);
   return changeCabState((state) => {
     if (body.revision !== state.operations.revision)
       throw new CabError(
@@ -217,11 +220,13 @@ export async function saveOperationalEntity(kind: string, input: unknown) {
         )
       )
         throw new CabError("Vehicle contains an unknown route restriction.");
+      if((kind==="drivers"||kind==="vehicles")&&(!(candidate as ManagedDriver).active||(candidate as ManagedDriver).availability!=="available")){for(const b of state.bookings){if(["ASSIGNED","IN_PROGRESS"].includes(b.status)&&(kind==="drivers"?b.assignment?.driverId===candidate.id:b.assignment?.vehicleId===candidate.id))queueCabEmail(state,b,"admin-fleet-alert",candidate.id+":"+(candidate as ManagedDriver).availability+":"+(candidate as ManagedDriver).active);}}
       const index = collection.findIndex((r) => r.id === candidate.id);
       if (index >= 0) collection[index] = candidate;
       else collection.unshift(candidate);
     }
     state.operations.revision++;
+    auditCab(state, "OWNER", "Updated " + kind+" by "+actorId, kind === "settings" ? "cab_settings" : (record as { id: string }).id);
     return state.operations;
   });
 }
