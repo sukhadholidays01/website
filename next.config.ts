@@ -1,7 +1,16 @@
 import type { NextConfig } from "next";
+import path from "node:path";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  webpack(config, { dir }) {
+    // Resolve the source alias explicitly for production webpack builds.
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "@": path.resolve(dir, "src"),
+    };
+    return config;
+  },
   experimental: {
     // Limit page-data collection and static generation workers on Hostinger.
     cpus: 1,
