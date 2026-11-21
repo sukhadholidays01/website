@@ -33,13 +33,28 @@ try {
     const lockName = "sukhd-migrate-" + createHash("sha256").update(options.database).digest("hex").slice(0,32);
     const [locks] = await connection.execute("SELECT GET_LOCK(?, 10) AS acquired", [lockName]);
     if (Number(locks[0].acquired) !== 1) throw new Error("Another migration is running");
-    await connection.query("CREATE TABLE IF NOT EXISTS schema_migrations (version VARCHAR(100) NOT NULL PRIMARY KEY, migration_name VARCHAR(190) NOT NULL, applied_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci");
+    await connection.query(`
+  CREATE TABLE IF NOT EXISTS schema_migrations (
+    version VARCHAR(100) NOT NULL PRIMARY KEY,
+    migration_name VARCHAR(190) NOT NULL,
+    applied_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
+  )
+  ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci
+`);
+    // Older production installs recorded only version/applied_at. Preserve that
+    // ledger rather than altering tables during registration recovery.
+    const [ledgerColumns] = await connection.execute("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'schema_migrations'", [options.database]);
+    if (!ledgerColumns.some(row => row.COLUMN_NAME === "version")) throw new Error("Migration ledger is missing its version column; manual review required.");
+    const recordsNames = ledgerColumns.some(row => row.COLUMN_NAME === "migration_name");
     for (const m of migrations) {
       const [rows] = await connection.execute("SELECT version FROM schema_migrations WHERE version = ?", [m.version]);
       if (rows.length) { console.log("Already applied " + m.name); continue; }
       // MySQL DDL auto-commits: additive statements are safe to rerun after partial failure.
       for (const statement of m.statements) await connection.query(statement);
-      await connection.execute("INSERT INTO schema_migrations (version, migration_name) VALUES (?, ?)", [m.version,m.name]);
+      if (recordsNames) await connection.execute("INSERT INTO schema_migrations (version, migration_name) VALUES (?, ?)", [m.version,m.name]);
+      else await connection.execute("INSERT INTO schema_migrations (version) VALUES (?)", [m.version]);
       console.log("Applied " + m.name);
     }
     console.log("Migration complete; run npm run db:verify.");
