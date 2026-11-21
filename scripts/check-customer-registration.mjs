@@ -17,7 +17,8 @@ const connection = {
   release() {},
   async execute(sql, values = []) {
     if (missing && sql.includes(missing)) {
-      throw Object.assign(new Error(privateMarker), { code: "ER_NO_SUCH_TABLE", sql: privateMarker });
+      throw Object.assign(new Error(privateMarker), { code: "ER_NO_SUCH_TABLE", sql: privateMarker,
+        sqlMessage: `Table 'private_database.${missing}' doesn't exist` });
     }
     if (sql.startsWith("SELECT request_count")) return [[{ request_count: 0, expires_at: new Date(Date.now() + 60000) }]];
     if (sql.startsWith("SELECT account_id FROM customer_accounts")) return [accounts.has(values[0]) ? [{ account_id: accounts.get(values[0]).id }] : []];
@@ -57,14 +58,15 @@ try {
   assert.equal((await post({ ...signup, password: "weak" })).status, 400);
   assert.equal((await post(signup, "https://untrusted.invalid")).status, 403);
 
-  for (const [table, stage] of [["customer_accounts", "register"], ["cab_rate_limits", "rate_limit"]]) {
+  for (const [table, stage] of [["customer_accounts", "register"], ["customer_verification_tokens", "register"], ["notifications", "register"], ["cab_rate_limits", "rate_limit"]]) {
     missing = table;
-    const response = await post();
+    const response = await post({ ...signup, email: `missing-${table}@example.invalid` });
     assert.equal(response.status, 503);
     const body = await response.json();
     const log = JSON.parse(logs.at(-1));
     assert.equal(log.stage, stage);
     assert.equal(log.code, "ER_NO_SUCH_TABLE");
+    assert.equal(log.table, table);
     assert.equal(log.requestId, body.requestId);
     assert(!JSON.stringify(body).includes(table));
   }
@@ -77,7 +79,19 @@ try {
 
   load("src/lib/auth/customer-diagnostics").logCustomerFailure({ code: privateMarker, message: privateMarker, sql: privateMarker }, "register", "test-reference");
   assert.equal(JSON.parse(logs.at(-1)).code, "UNEXPECTED");
+  const diagnostics=load("src/lib/auth/customer-diagnostics");
+  for(const sqlMessage of [
+    `Table 'private_database.${privateMarker}' doesn't exist`,
+    `Table 'private_database.customer_accounts' doesn't exist ${privateMarker}`,
+    `Duplicate entry '${privateMarker}' for key 'email'`,
+  ]) {
+    diagnostics.logCustomerFailure({code:"ER_NO_SUCH_TABLE",sqlMessage},"register","test-reference");
+    assert(!Object.hasOwn(JSON.parse(logs.at(-1)),"table"));
+  }
+  diagnostics.logCustomerFailure({code:"ER_DUP_ENTRY",sqlMessage:"Table 'private_database.customer_accounts' doesn't exist"},"register","test-reference");
+  assert(!Object.hasOwn(JSON.parse(logs.at(-1)),"table"));
   assert(!logs.join().includes(privateMarker));
+  assert(!logs.join().includes("private_database"));
   assert(!logs.join().includes(signup.email));
   assert(!logs.join().includes(password));
 

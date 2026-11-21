@@ -12,6 +12,10 @@ try {
  const [columns] = await connection.execute("SELECT TABLE_NAME, COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ?", [options.database]);
  const [indexes] = await connection.execute("SELECT TABLE_NAME, INDEX_NAME, COLUMN_NAME, NON_UNIQUE FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = ?", [options.database]);
  const [foreign] = await connection.execute("SELECT TABLE_NAME, CONSTRAINT_NAME, COLUMN_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA = ? AND REFERENCED_TABLE_NAME IS NOT NULL", [options.database]);
+ // Check customer prerequisites first so a baseline-only deployment cannot be
+ // mistaken for a working registration service.
+ for(const table of ["customer_accounts","customer_verification_tokens","customer_sessions","notifications","cab_rate_limits"])
+  assert(columns.some(row=>row.TABLE_NAME===table),"Missing registration table: "+table+" (customer schema is defined in migration 007; baseline tables in 001)");
  assert(columns.some(row=>row.TABLE_NAME==="schema_migrations"&&row.COLUMN_NAME==="version"),"Migration ledger is missing its version column");
  const recordsNames=columns.some(row=>row.TABLE_NAME==="schema_migrations"&&row.COLUMN_NAME==="migration_name");
  const files = (await readdir("database/migrations")).filter(name => /^\d+_[a-z0-9_-]+\.sql$/i.test(name)).sort();
