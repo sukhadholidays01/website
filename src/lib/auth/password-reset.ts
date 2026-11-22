@@ -10,7 +10,7 @@ import { adminAllowlist, isAllowedAdminEmail } from "./allowlist";
 import { resetEmail } from "./reset-email";
 import { adminResetOrigin } from "./reset-configuration.mjs";
 import { smtpConfigurationProblems } from "../email/smtp-configuration.mjs";
-import { resetDiagnostic, resetFailureCode } from "./reset-diagnostics";
+import { resetDiagnostic, resetFailureCode, type ResetSkipReason } from "./reset-diagnostics";
 
 export const resetAcknowledgement = "Your request has been received. If this is an authorised active admin account and email submission succeeds, a reset link will arrive at that address. Check your inbox and spam folder. Delivery is not confirmed.";
 const emailSchema = z.string().trim().email().max(190).transform(v => v.toLowerCase());
@@ -48,8 +48,8 @@ export async function requestAdminPasswordReset(body: unknown, requestId = rando
   // Validate SMTP for every valid input, so configuration errors do not disclose accounts.
   try { await verifySmtpConnection(); }
   catch (error) { await recordMailFailure(error, requestId); throw new CabError("Email service is temporarily unavailable. Please try again later or contact support.", 503); }
-  const skipped = () => resetDiagnostic("admin_reset_email_result", requestId, { status: "skipped" });
-  if (!isAllowedAdminEmail(recipient)) { skipped(); return; }
+  const skipped = (reason: ResetSkipReason) => resetDiagnostic("admin_reset_email_result", requestId, { status: "skipped", reason });
+  if (!isAllowedAdminEmail(recipient)) { skipped("email_not_allowlisted"); return; }
   const db = await getDatabasePool().getConnection();
   const token = randomBytes(32).toString("hex"), tokenHash = hash(token);
   let issued = false;
@@ -57,9 +57,10 @@ export async function requestAdminPasswordReset(body: unknown, requestId = rando
     await db.beginTransaction();
     const [users] = await db.execute<RowDataPacket[]>("SELECT user_id, role, is_active FROM users WHERE email = ? FOR UPDATE", [recipient]);
     const user = users[0];
-    if (!user?.is_active || !staffRole(user.role)) { await db.rollback(); skipped(); return; }
+    const skipReason: ResetSkipReason | undefined = !user ? "account_missing" : !user.is_active ? "account_inactive" : !staffRole(user.role) ? "account_role_ineligible" : undefined;
+    if (skipReason) { await db.rollback(); skipped(skipReason); return; }
     const [recent] = await db.execute<RowDataPacket[]>("SELECT token_hash FROM admin_password_resets WHERE user_id = ? AND created_at > DATE_SUB(UTC_TIMESTAMP(3), INTERVAL 1 MINUTE)", [user.user_id]);
-    if (recent.length) { await db.rollback(); skipped(); return; }
+    if (recent.length) { await db.rollback(); skipped("cooldown_active"); return; }
     await db.execute("DELETE FROM admin_password_resets WHERE user_id = ?", [user.user_id]);
     await db.execute("INSERT INTO admin_password_resets (token_hash, user_id, expires_at, created_at) VALUES (?, ?, DATE_ADD(UTC_TIMESTAMP(3), INTERVAL 30 MINUTE), UTC_TIMESTAMP(3))", [tokenHash, user.user_id]);
     await db.commit(); issued = true;
@@ -69,6 +70,7 @@ export async function requestAdminPasswordReset(body: unknown, requestId = rando
     // A fragment keeps the token out of HTTP URLs, server access logs and referrers.
     const link = `${origin}/admin/reset-password#token=${token}`;
     try {
+      resetDiagnostic("admin_reset_email_result", requestId, { status: "attempted", stage: "submission" });
       await sendSmtpEmail({ to: recipient, ...resetEmail(link) });
       resetDiagnostic("admin_reset_email_result", requestId, { status: "accepted", stage: "submission" });
     } catch (error) {

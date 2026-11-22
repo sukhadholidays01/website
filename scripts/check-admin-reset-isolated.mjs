@@ -55,7 +55,22 @@ try{
  const encoded=await hashPassword(password);state.users=emails.map((email,i)=>({user_id:randomUUID(),email,password_hash:encoded,role:i?'VIEWER':'OWNER',is_active:true}));
  const request=(action,body,origin=process.env.CAB_SITE_ORIGIN)=>api(new Request('https://sukhadholidays.in/api/cab/password-reset/'+action,{method:'POST',headers:{origin,'content-type':'application/json'},body:JSON.stringify(body)}),action);
  const tokenFromMail=()=>new URL(mail.at(-1).text.match(/^https:\/\/[^\s]+$/m)[0]).hash.slice(7);
+ const assertSkipped=async(email,reason)=>{
+  const before=mail.length,tokenCount=state.tokens.size;
+  const response=await request('request',{email}),body=await response.json();
+  assert.equal(response.status,200);assert.equal(body.message,service.resetAcknowledgement);
+  const events=logs.filter(l=>l.requestId===body.requestId);
+  assert(events.some(l=>l.event==='admin_reset_email_result'&&l.status==='skipped'&&l.reason===reason));
+  assert(!events.some(l=>l.status==='attempted'||l.status==='accepted'));
+  assert.equal(mail.length,before);assert.equal(state.tokens.size,tokenCount);
+ };
+ await assertSkipped('unlisted@example.invalid','email_not_allowlisted');
+ const fixtureUser=state.users.shift();await assertSkipped(emails[0],'account_missing');state.users.unshift(fixtureUser);
+ state.users[0].is_active=false;await assertSkipped(emails[0],'account_inactive');state.users[0].is_active=true;
+ const fixtureRole=state.users[0].role;state.users[0].role='CUSTOMER';await assertSkipped(emails[0],'account_role_ineligible');state.users[0].role=fixtureRole;
  const received=await request('request',{email:emails[0]});assert.equal(received.status,200);const ack=await received.json();assert.equal(received.headers.get('x-request-id'),ack.requestId);
+ assert(logs.some(l=>l.status==='attempted'&&l.stage==='submission'&&l.requestId===ack.requestId));
+ await assertSkipped(emails[0],'cooldown_active');
  assert(logs.some(l=>l.event==='admin_reset_request_received'&&l.requestId===ack.requestId));assert(logs.some(l=>l.status==='accepted'&&l.requestId===ack.requestId));
  const first=tokenFromMail();assert(/^[a-f0-9]{64}$/.test(first));assert(state.tokens.has(hash(first)));assert(!state.tokens.has(first));assert(state.tokens.get(hash(first)).expires-state.tokens.get(hash(first)).created===1800000);
  assert(mail.at(-1).text.includes('https://sukhadholidays.in/admin/reset-password#token='));
