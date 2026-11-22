@@ -20,7 +20,7 @@ import {
 } from "@/lib/cab/security";
 import { adminLogin, adminLogout, adminSession } from "@/lib/auth/admin-session";
 import { testAdminEmail } from "@/lib/email/admin-test";
-import { requestAdminPasswordReset, confirmAdminPasswordReset, inspectAdminResetToken, resetAcknowledgement } from "@/lib/auth/password-reset";
+import { handleAdminPasswordReset, type ResetAction } from "@/lib/auth/password-reset-api";
 import { cabStorageMode, changeCabState, readCabState } from "@/lib/cab/store";
 import {
   authorizeBooking,
@@ -73,20 +73,6 @@ async function legacyHandle(request: Request, context: Context) {
       const role = await requireCabPermission("settings");
       await limitRequest(request, "admin-email-test", 3, 15 * 60000);
       return privateJson(await testAdminEmail(await readBody(request), role));
-    }
-    if (route === "password-reset/validate" && method === "POST") {
-      await limitRequest(request, "admin-reset-validate", 15, 15 * 60000);
-      return privateJson(await inspectAdminResetToken(await readBody(request)));
-    }
-    if (route === "password-reset/request" && method === "POST") {
-      await limitRequest(request, "admin-reset-request", 3, 15 * 60000);
-      await requestAdminPasswordReset(await readBody(request));
-      return privateJson({ message: resetAcknowledgement });
-    }
-    if (route === "password-reset/confirm" && method === "POST") {
-      await limitRequest(request, "admin-reset-confirm", 8, 15 * 60000);
-      await confirmAdminPasswordReset(await readBody(request));
-      return privateJson({ message: "Password updated. Sign in with your new password." });
     }
     if (route === "driver/session") {
       await limitRequest(request, "driver-session", 12);
@@ -377,6 +363,8 @@ async function legacyHandle(request: Request, context: Context) {
 async function handle(request:Request,context:Context) {
   try {
     const parts=(await context.params).path,route=parts.join('/');
+    if (request.method === "POST" && parts.length === 2 && parts[0] === "password-reset" && ["request", "validate", "confirm"].includes(parts[1]))
+      return handleAdminPasswordReset(request, parts[1] as ResetAction);
     if(request.method!=='GET'&&route!=='payments/razorpay/webhook')requireSameOrigin(request);
     const commercial=await handleCommercialApi(request,parts);if(commercial)return commercial;
     const guest=await handleGuestApi(request,parts);if(guest)return guest;

@@ -1,9 +1,10 @@
 import "server-only";
 import nodemailer, { type SendMailOptions } from "nodemailer";
+import { smtpConfigurationProblems } from "./smtp-configuration.mjs";
 export function safeSmtpFailure(error: unknown) {
   const e = error as { code?: string; responseCode?: number } | null;
   const code = e?.code && /^[A-Z0-9_]{1,40}$/.test(e.code) ? e.code : "SMTP_UNAVAILABLE";
-  const stage = code === "EAUTH" ? "authentication" : ["ECONNECTION", "ECONNREFUSED", "ETIMEDOUT", "ESOCKET", "EDNS", "ENOTFOUND"].includes(code) ? "connection" : "submission";
+  const stage = code === "SMTP_CONFIGURATION" ? "configuration" : code === "EAUTH" ? "authentication" : ["ECONNECTION", "ECONNREFUSED", "ETIMEDOUT", "ESOCKET", "EDNS", "ENOTFOUND"].includes(code) ? "connection" : "submission";
   return { stage, code, responseCode: typeof e?.responseCode === "number" ? e.responseCode : undefined };
 }
 export async function verifySmtpConnection() {
@@ -16,8 +17,8 @@ export async function verifySmtpConnection() {
 /** Shared Hostinger SMTP transport for booking and account emails. Never logs message bodies. */
 export function createSmtpTransport() {
   const sender = process.env.SMTP_USER;
-  if (!process.env.SMTP_HOST || !sender || !process.env.SMTP_PASS || !/^[^\s<>@]+@[^\s<>@]+$/.test(sender))
-    throw new Error("SMTP configuration is incomplete.");
+  if (smtpConfigurationProblems(process.env).length)
+    throw Object.assign(new Error("SMTP configuration is incomplete or invalid."), { code: "SMTP_CONFIGURATION" });
   const port = Number(process.env.SMTP_PORT || 465);
   if (![465, 587].includes(port)) throw new Error("Use SMTP TLS port 465 or STARTTLS port 587.");
   return nodemailer.createTransport({

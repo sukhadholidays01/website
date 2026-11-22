@@ -35,6 +35,9 @@ new Function("require", "module", "exports", source)(name => {
   if (name === "@/lib/cab/security") return { CabError, hash, staffRole: role => ["OWNER", "VIEWER"].includes(role) ? role : null };
   if (name === "./allowlist") return loadCabModule("src/lib/auth/allowlist");
   if (name === "./reset-email") return loadCabModule("src/lib/auth/reset-email");
+  if (name === "./reset-configuration.mjs") return loadCabModule("src/lib/auth/reset-configuration.mjs");
+  if (name === "../email/smtp-configuration.mjs") return loadCabModule("src/lib/email/smtp-configuration.mjs");
+  if (name === "./reset-diagnostics") return loadCabModule("src/lib/auth/reset-diagnostics");
   if (name === "./passwords.mjs") return { hashPassword };
   if (name === "@/lib/email/smtp") return {
     verifySmtpConnection: async () => ({connected:true,authenticated:true}),

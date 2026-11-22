@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, LoaderCircle, CheckCircle2 } from "lucide-react";
-import { cabApi } from "@/lib/cab/client";
+import { passwordResetApi } from "@/lib/auth/password-reset-client";
 import { adminApi } from "@/lib/auth/admin-client";
 import { useToast } from "@/components/notifications/ToastProvider";
 import { AuthFrame, PasswordField } from "./AuthFrame";
@@ -18,7 +18,7 @@ export function StaffLogin({ recovery = false }: { recovery?: boolean }) {
     {message ? <div className="sh-auth-success" role="status"><CheckCircle2 size={32}/><p className="sh-auth-notice">{message}</p></div> : <form noValidate onSubmit={async e=>{
       e.preventDefault();setError("");const next:Record<string,string>={};if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))next.email="Enter a valid email address.";if(!recovery&&!password)next.password="Enter your password.";setFields(next);if(Object.keys(next).length)return;
       setBusy(true);const id=notify({kind:"loading",title:recovery ? "Submitting reset request" : "Signing in"});
-      try{if(recovery){const result=await cabApi<{message:string}>("password-reset/request",{method:"POST",body:{email}});setMessage(result.message);notify({id,kind:"info",title:"Reset request received",description:result.message});}
+      try{if(recovery){const result=await passwordResetApi<{message:string;requestId:string}>("request",{email});setMessage(result.message+" Reference: "+result.requestId);notify({id,kind:"info",title:"Reset request received",description:result.message});}
       else{await adminApi("login",{method:"POST",body:{email,password}});setPassword("");notify({id,kind:"success",title:"Signed in successfully"});router.replace("/admin/cab-operations");}}
       catch(err){const text=err instanceof Error?err.message:"Unable to complete your request. Please try again.";setError(text);notify({id,kind:"error",title:recovery?"Reset request could not be completed":"Unable to sign in",description:text});}finally{setBusy(false);}
     }}>
