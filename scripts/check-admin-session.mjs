@@ -9,9 +9,10 @@ const saved={...process.env},logs=[],jar=new Map(),cookieOptions=new Map(),sessi
 const originalError=console.error,originalFetch=globalThis.fetch;
 const emails=[`${randomUUID()}@example.invalid`,`${randomUUID()}@example.invalid`];
 const password=randomBytes(24).toString('hex');
-let databaseFailure;
+let databaseFailure,sqlCalls=0;
 const users=[];
 async function execute(sql,args=[]){
+  sqlCalls++;
   if(databaseFailure)throw databaseFailure;
   if(sql.startsWith('SELECT user_id, password_hash'))return [users.filter(u=>u.email===args[0])];
   if(sql.startsWith('INSERT INTO cab_admin_sessions')){sessions.set(args[0],{userId:args[1],expires:args[2]});return [{affectedRows:1}];}
@@ -39,6 +40,21 @@ try{
   const protectedRequest=()=>({url:'https://admin-test.invalid/admin',nextUrl:new URL('https://admin-test.invalid/admin'),cookies});
   console.error=message=>logs.push(JSON.parse(message));
   assert.equal((await session()).status,200);assert.equal((await (await session()).json()).authenticated,false);
+  const before=sqlCalls,failuresBefore=logs.length;
+  for(const key of ['ADMIN_EMAIL_1','ADMIN_EMAIL_2','CAB_SESSION_SECRET','DB_HOST','DB_NAME','DB_PORT']){
+    const previous=process.env[key];process.env[key]=key==='DB_PORT'?'invalid':'';
+    const response=await session();assert.equal(response.status,200);
+    const result=await response.json();assert.equal(result.authenticated,false);assert.equal(result.role,null);
+    assert.equal(response.headers.get('cache-control'),'no-store');assert.equal(response.headers.get('x-request-id'),result.requestId);
+    process.env[key]=previous;
+  }
+  databaseFailure={code:'ECONNREFUSED'};
+  assert.equal((await session()).status,200);databaseFailure=undefined;
+  const customerCookie=readFileSync('src/lib/auth/customer.ts','utf8').match(/export const customerCookie="([^"]+)"/)?.[1];
+  assert(customerCookie);jar.set(customerCookie,'synthetic-customer-session');jar.set('cab_driver_session','synthetic-driver-session');
+  assert.equal((await (await session()).json()).authenticated,false);jar.clear();
+  assert.equal(sqlCalls,before,'No-cookie session discovery must not query any database');
+  assert.equal(logs.length,failuresBefore,'Normal logged-out visitors must not generate infrastructure failure logs');
   assert.equal((await proxy(protectedRequest())).status,307);
   for(let i=0;i<2;i++){
     const response=await login(request('login',{email:' '+emails[i].toUpperCase()+' ',password}));
@@ -69,14 +85,21 @@ try{
   sessions.get(security.hash(token)).expires=new Date(0);assert.equal((await (await session()).json()).authenticated,false);assert.equal((await proxy(protectedRequest())).status,307);
   jar.set('cab_ops_session',token+'tampered');assert.equal((await (await session()).json()).authenticated,false);jar.clear();
   for(const [key,value,code] of [['ADMIN_EMAIL_2','', 'ADMIN_ALLOWLIST_CONFIGURATION'],['ADMIN_EMAIL_2',emails[0].toUpperCase(),'ADMIN_ALLOWLIST_CONFIGURATION'],['CAB_SESSION_SECRET','short','ADMIN_SESSION_CONFIGURATION'],['DB_NAME','','DATABASE_CONFIGURATION'],['DB_PORT','bad','DATABASE_CONFIGURATION']]){
-    const previous=process.env[key];process.env[key]=value;const response=await login(request('login',{email:emails[0],password}));assert.equal(response.status,503);assert.equal(logs.at(-1).code,code);assert.equal(logs.at(-1).requestId,(await response.json()).requestId);process.env[key]=previous;
+    const previous=process.env[key];process.env[key]=value;const response=await login(request('login',{email:emails[0],password}));assert.equal(response.status,503);assert.equal(logs.at(-1).code,code);assert.equal(logs.at(-1).stage,'configuration');assert.equal(logs.at(-1).requestId,(await response.json()).requestId);process.env[key]=previous;
+  }
+  for(const [key,value,problem] of [['ADMIN_EMAIL_1','','ADMIN_EMAIL_1_MISSING'],['ADMIN_EMAIL_2','   ','ADMIN_EMAIL_2_MISSING'],['ADMIN_EMAIL_1','not-an-address','ADMIN_EMAIL_1_INVALID'],['ADMIN_EMAIL_2','not-an-address','ADMIN_EMAIL_2_INVALID'],['ADMIN_EMAIL_2',emails[0].toUpperCase(),'ADMIN_EMAILS_DUPLICATE']]){
+    const previous=process.env[key],queriesBefore=sqlCalls;process.env[key]=value;
+    const response=await login(request('login',{email:emails[0],password}));assert.equal(response.status,503);
+    assert.deepEqual(logs.at(-1).configurationProblems,[problem]);assert.equal(sqlCalls,queriesBefore,'Invalid allowlist must fail before database access');
+    const body=await response.json();assert.equal(body.configurationProblems,undefined);assert.equal(body.requestId,logs.at(-1).requestId);
+    process.env[key]=previous;
   }
   databaseFailure={code:'ER_NO_SUCH_TABLE',sqlMessage:"Table 'private_database.users' doesn't exist"};
   assert.equal((await login(request('login',{email:emails[0],password}))).status,503);assert.equal(logs.at(-1).table,'users');assert.equal(logs.at(-1).operation,'admin_login');
   databaseFailure={code:'ER_BAD_FIELD_ERROR',sqlMessage:'secret payload '+password};
   assert.equal((await login(request('login',{email:emails[0],password}))).status,503);assert.equal(logs.at(-1).code,'ER_BAD_FIELD_ERROR');
-  jar.set('cab_ops_session',token);assert.equal((await session()).status,503);assert.equal(logs.at(-1).operation,'admin_session_check');
-  assert.equal((await logout(request('logout'))).status,503);assert.equal(logs.at(-1).operation,'admin_logout');assert.equal(jar.get('cab_ops_session'),token);
+  jar.set('cab_ops_session',token);const unavailable=await session();assert.equal(unavailable.status,503);assert.equal(logs.at(-1).operation,'admin_session_check');assert.equal(logs.at(-1).stage,'session_lookup');assert.equal(logs.at(-1).requestId,(await unavailable.json()).requestId);
+  assert.equal((await logout(request('logout'))).status,503);assert.equal(logs.at(-1).operation,'admin_logout');assert.equal(logs.at(-1).stage,'session_revoke');assert.equal(jar.get('cab_ops_session'),token);
   databaseFailure=undefined;
   const logged=JSON.stringify(logs);for(const secret of [password,token,process.env.DB_PASSWORD,process.env.CAB_SESSION_SECRET,...emails,'private_database'])assert(!logged.includes(secret));
 
@@ -90,7 +113,7 @@ try{
   globalThis.fetch=async()=>Response.json({error:'Unavailable',requestId:randomUUID()},{status:503});await assert.rejects(client.adminApi('session'),/Reference:/);
   globalThis.fetch=async()=>new Response('<html>Unavailable</html>',{status:502});await assert.rejects(client.adminApi('session'),/Admin service/);
   const legacy=readFileSync('src/app/api/cab/[...path]/route.ts','utf8');assert(legacy.includes('return adminLogin(request)'));assert(legacy.includes('return adminSession()'));assert(legacy.includes('return adminLogout(request)'));assert(legacy.includes('route === "driver/session"'));
-  console.log('PASS dedicated admin routes and client transport; both isolated allowlisted accounts; real password hashing; role permissions; protected admin proxy; logout/replay/expiry/tampering; origin and configuration guards; safe correlated database diagnostics; legacy cab delegation preserved. No database or network access.');
+  console.log('PASS no-cookie session discovery without configuration/database dependencies; dedicated admin routes and client transport; both isolated allowlisted accounts; real password hashing; role permissions; protected admin proxy; logout/replay/expiry/tampering; origin and configuration guards; safe correlated stage/database diagnostics; legacy cab delegation preserved. No database or network access.');
 }finally{
   console.error=originalError;globalThis.fetch=originalFetch;
   for(const key of Object.keys(process.env))if(!(key in saved))delete process.env[key];Object.assign(process.env,saved);
