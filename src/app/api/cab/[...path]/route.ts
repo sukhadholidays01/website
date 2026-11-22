@@ -7,24 +7,18 @@ import { withGuestGrant } from "@/lib/cab/guest-context";
 import { checkConfirmationRequirements, requireBookingConsent } from "@/lib/cab/guest-documents";
 import { cookies } from "next/headers";
 import {
-  adminConfigured,
   cabErrorResponse,
   CabError,
-  hasCabAdmin,
-  issueAdminSession,
   limitRequest,
   privateJson,
   readBody,
   readRawBody,
-  registerCabSession,
-  revokeCabSession,
   requireCabAdmin,
   requireSameOrigin,
   requireCabPermission,
-  cabAdminRole,
   hash,
 } from "@/lib/cab/security";
-import { authenticateAdmin } from "@/lib/auth/admin";
+import { adminLogin, adminLogout, adminSession } from "@/lib/auth/admin-session";
 import { testAdminEmail } from "@/lib/email/admin-test";
 import { requestAdminPasswordReset, confirmAdminPasswordReset, inspectAdminResetToken, resetAcknowledgement } from "@/lib/auth/password-reset";
 import { cabStorageMode, changeCabState, readCabState } from "@/lib/cab/store";
@@ -194,41 +188,10 @@ async function legacyHandle(request: Request, context: Context) {
         return privateJson({ attempt });
       }
     }
-    if (route === "session" && method === "GET") {
-      return privateJson({
-        authenticated: await hasCabAdmin(),
-        role: await hasCabAdmin() ? await cabAdminRole() : null,
-        configured: adminConfigured(),
-        storage: cabStorageMode(),
-      });
-    }
-    if (route === "session" && method === "POST") {
-      if (!adminConfigured())
-        throw new CabError(
-          "Admin sign-in is temporarily unavailable. Please contact support.",
-          503,
-        );
-      await limitRequest(request, "login", 8, 15 * 60000);
-      const body = await readBody(request);
-      const account = await authenticateAdmin(body);
-      const session = issueAdminSession(account.role);
-      await registerCabSession(session, account.id);
-      (await cookies()).set("cab_ops_session", session, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        path: "/",
-        maxAge: 8 * 3600,
-      });
-      return privateJson({ authenticated: true, role: account.role });
-    }
-    if (route === "session" && method === "DELETE") {
-      await revokeCabSession(
-        (await cookies()).get("cab_ops_session")?.value || "",
-      );
-      (await cookies()).delete("cab_ops_session");
-      return privateJson({ authenticated: false });
-    }
+    // Compatibility for existing cab clients; one staff authentication implementation.
+    if (route === "session" && method === "GET") return adminSession();
+    if (route === "session" && method === "POST") return adminLogin(request);
+    if (route === "session" && method === "DELETE") return adminLogout(request);
     if (route === "places" && method === "GET") {
       const query = (new URL(request.url).searchParams.get("q") || "").trim();
       if (query.length < 2 || query.length > 150)

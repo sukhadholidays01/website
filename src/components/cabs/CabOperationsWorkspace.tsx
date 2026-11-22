@@ -1,4 +1,5 @@
 "use client";
+import { adminApi } from "@/lib/auth/admin-client";
 import { useToastFeedback } from "@/components/notifications/ToastProvider";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
@@ -80,7 +81,7 @@ export function CabOperations({ embedded = false, view = "dashboard" }: { embedd
   }, [message]);
   useEffect(() => {
     const controller = new AbortController();
-    void cabApi<{
+    void adminApi<{
       authenticated: boolean;
       configured: boolean;
       storage: string;
@@ -187,7 +188,7 @@ export function CabOperations({ embedded = false, view = "dashboard" }: { embedd
                 disabled={busy}
                 onClick={async () => {
                   try {
-                    await cabApi("session", { method: "DELETE" });
+                    await adminApi("logout", { method: "POST" });
                     setSession({ ...session, authenticated: false });
                     setData(undefined);
                     router.replace("/admin/login");

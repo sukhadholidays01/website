@@ -1,7 +1,7 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { cabApi } from "@/lib/cab/client";
+import { adminApi } from "@/lib/auth/admin-client";
 import { useToast } from "@/components/notifications/ToastProvider";
 import { ErrorState, LoadingState } from "./ui";
 
@@ -24,15 +24,15 @@ export function AdminSessionProvider({ children }: { children: ReactNode }) {
       if (pending) return;
       pending = true;
       try {
-        const result = await cabApi<Session>("session", { signal: controller.signal });
+        const result = await adminApi<Session>("session", { signal: controller.signal });
         if (controller.signal.aborted) return;
         if (!result.authenticated || !result.role || !roles.includes(result.role)) {
           setSession(null); router.replace("/admin/login"); router.refresh();
           return;
         }
         setSession(result); setError("");
-      } catch {
-        if (!controller.signal.aborted) setError("We could not verify your admin session. Please retry.");
+      } catch (error) {
+        if (!controller.signal.aborted) setError(error instanceof Error ? error.message : "We could not verify your admin session. Please retry.");
       } finally { pending = false; }
     }
     void check();
@@ -46,13 +46,13 @@ export function AdminSessionProvider({ children }: { children: ReactNode }) {
     if (signingOut) return false;
     setSigningOut(true);
     try {
-      await cabApi("session", { method: "DELETE" });
+      await adminApi("logout", { method: "POST" });
       setSession(null);
       notify({ kind: "success", title: "Signed out securely" });
       window.location.replace("/admin/login");
       return true;
-    } catch {
-      notify({ kind: "error", title: "Sign-out could not be completed", description: "Please retry. Your session has not been confirmed as revoked." });
+    } catch (error) {
+      notify({ kind: "error", title: "Sign-out could not be completed", description: error instanceof Error ? error.message + " Your session has not been confirmed as revoked." : "Please retry. Your session has not been confirmed as revoked." });
       return false;
     } finally { setSigningOut(false); }
   }, [notify, signingOut]);
