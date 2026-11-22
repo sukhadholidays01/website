@@ -6,6 +6,7 @@ const nativeRequire = createRequire(import.meta.url);
 const cache = new Map();
 /** Test-only TS loader: exercises pure business modules without adding a runtime dependency. */
 export function loadCabModule(file) {
+  if (file.endsWith(".mjs")) return nativeRequire(path.resolve(file));
   const filename = path.resolve(file.endsWith(".ts") ? file : file + ".ts");
   if (cache.has(filename)) return cache.get(filename).exports;
   const loadedModule = { exports: {} };

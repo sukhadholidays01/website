@@ -3,13 +3,14 @@ import { randomUUID } from "node:crypto";
 import { cookies } from "next/headers";
 import { adminAllowlist, AdminConfigurationError, type AdminConfigurationProblem } from "./allowlist";
 import { authenticateAdmin } from "./admin";
+import { adminSessionConfigurationProblem, type AdminSessionConfigurationProblem } from "./admin-session-configuration.mjs";
 import { cabStorageMode } from "@/lib/cab/store";
 import { adminConfigured, CabError, issueAdminSession, limitRequest, readBody, registerCabSession, revokeCabSession, requireSameOrigin, validateAdminSession } from "@/lib/cab/security";
 
 type Operation = "admin_login" | "admin_session_check" | "admin_logout";
 type Stage = "request" | "cookie_read" | "origin" | "configuration" | "rate_limit" | "body" | "account_authentication" | "session_lookup" | "session_create" | "session_revoke" | "cookie_write";
 class ConfigurationFailure extends CabError {
-  constructor(readonly category: string, readonly configurationProblems?: readonly AdminConfigurationProblem[]) {
+  constructor(readonly category: string, readonly configurationProblems?: readonly (AdminConfigurationProblem | AdminSessionConfigurationProblem)[]) {
     super("Admin sign-in is temporarily unavailable. Please contact support.", 503);
   }
 }
@@ -18,7 +19,8 @@ function requireConfiguration() {
     if (error instanceof AdminConfigurationError) throw new ConfigurationFailure("ADMIN_ALLOWLIST_CONFIGURATION", error.configurationProblems);
     throw error;
   }
-  if ((process.env.CAB_SESSION_SECRET || "").length < 32) throw new ConfigurationFailure("ADMIN_SESSION_CONFIGURATION");
+  const sessionProblem = adminSessionConfigurationProblem({ CAB_SESSION_SECRET: process.env.CAB_SESSION_SECRET });
+  if (sessionProblem) throw new ConfigurationFailure("ADMIN_SESSION_CONFIGURATION", [sessionProblem]);
   if (cabStorageMode() !== "mysql") throw new ConfigurationFailure("ADMIN_STORAGE_CONFIGURATION");
   if (["DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME"].some(key => !process.env[key])) throw new ConfigurationFailure("DATABASE_CONFIGURATION");
   const port = Number(process.env.DB_PORT || 3306);

@@ -32,12 +32,16 @@ const pool={execute,getConnection:async()=>({execute,beginTransaction:async()=>{
 const cookies={get:key=>jar.has(key)?{value:jar.get(key)}:undefined,set:(key,value,options)=>{jar.set(key,value);cookieOptions.set(key,options);},delete:key=>jar.delete(key)};
 const store={cabStorageMode:()=> 'mysql',changeCabState:()=>{throw Error('Cab state mutation is forbidden in this test');}};
 try{
-  const validEnvironment={ADMIN_EMAIL_1:' '+emails[0].toUpperCase()+' ',ADMIN_EMAIL_2:emails[1]};
-  assert.deepEqual(checkAdminEnvironment(validEnvironment),{ok:true,authorisedAddressCount:2});
+  const validEnvironment={ADMIN_EMAIL_1:' '+emails[0].toUpperCase()+' ',ADMIN_EMAIL_2:emails[1],CAB_SESSION_SECRET:randomBytes(32).toString('hex')};
+  assert.deepEqual(checkAdminEnvironment(validEnvironment),{ok:true,authorisedAddressCount:2,sessionSigningSecretConfigured:true});
+  for(const [secret,problem] of [[undefined,'CAB_SESSION_SECRET_MISSING'],['','CAB_SESSION_SECRET_MISSING'],['x'.repeat(31),'CAB_SESSION_SECRET_TOO_SHORT']]){
+    assert.deepEqual(checkAdminEnvironment({...validEnvironment,CAB_SESSION_SECRET:secret}),{ok:false,code:'ADMIN_SESSION_CONFIGURATION',configurationProblems:[problem]});
+  }
+  assert.equal(checkAdminEnvironment({...validEnvironment,CAB_SESSION_SECRET:'x'.repeat(32)}).ok,true);
   for(const environment of [{},{NEXT_PUBLIC_ADMIN_EMAIL_1:emails[0],NEXT_PUBLIC_ADMIN_EMAIL_2:emails[1]},{ADMIN_EMAILS:emails.join(',')},{ADMIN_EMAIL_1:emails.join(','),ADMIN_EMAIL_2:emails[1]},{ADMIN_EMAIL_1:'"'+emails[0]+'"',ADMIN_EMAIL_2:emails[1]},{ADMIN_EMAIL_1:emails[0],ADMIN_EMAIL_2:emails[0].toUpperCase()}]){
     const result=checkAdminEnvironment(environment);assert.equal(result.ok,false);assert.equal(result.code,'ADMIN_ALLOWLIST_CONFIGURATION');assert(!JSON.stringify(result).includes(emails[0]));
   }
-  const cliEnvironment={...process.env,ADMIN_EMAIL_1:emails[0],ADMIN_EMAIL_2:emails[1]};
+  const cliEnvironment={...process.env,ADMIN_EMAIL_1:emails[0],ADMIN_EMAIL_2:emails[1],CAB_SESSION_SECRET:validEnvironment.CAB_SESSION_SECRET};
   for(const valid of [true,false]){
     const environment={...cliEnvironment};if(!valid){delete environment.ADMIN_EMAIL_1;delete environment.ADMIN_EMAIL_2;}
     const run=spawnSync(process.execPath,['scripts/check-admin-environment.mjs','--production','--process-only'],{encoding:'utf8',env:environment,windowsHide:true});
@@ -45,10 +49,16 @@ try{
     const result=JSON.parse(run.stdout);assert.equal(result.ok,valid);assert.equal(result.loading,'process-only');
     assert(!run.stdout.includes(emails[0]));assert(!run.stdout.includes(emails[1]));
   }
+  for(const secret of ['', 'x'.repeat(31)]){
+    const run=spawnSync(process.execPath,['scripts/check-admin-environment.mjs','--production','--process-only'],{encoding:'utf8',env:{...cliEnvironment,CAB_SESSION_SECRET:secret},windowsHide:true});
+    assert.equal(run.status,1);assert.equal(JSON.parse(run.stdout).code,'ADMIN_SESSION_CONFIGURATION');
+    assert(!run.stdout.includes(validEnvironment.CAB_SESSION_SECRET));
+  }
   Object.assign(process.env,{NODE_ENV:'production',ADMIN_EMAIL_1:emails[0],ADMIN_EMAIL_2:emails[1],CAB_SESSION_SECRET:randomBytes(48).toString('hex'),CAB_SITE_ORIGIN:'https://admin-test.invalid',DB_HOST:'isolated.invalid',DB_USER:'fixture',DB_PASSWORD:'fixture-only',DB_NAME:'isolated_dev',DB_PORT:'3306'});
   const encoded=await hashPassword(password);
   users.push(...emails.map((email,i)=>({user_id:randomUUID(),email,password_hash:encoded,role:i?'DISPATCHER':'OWNER',is_active:true})));
-  const load=serverModuleLoader({'@/lib/db':{getDatabasePool:()=>pool},'@/lib/cab/store':store,'./store':store,'next/headers':{cookies:async()=>cookies},'next/server':{NextResponse:{next:()=>new Response(null,{status:200}),redirect:url=>Response.redirect(url,307)}}});
+  const boundaries={'@/lib/db':{getDatabasePool:()=>pool},'@/lib/cab/store':store,'./store':store,'next/headers':{cookies:async()=>cookies},'next/server':{NextResponse:{next:()=>new Response(null,{status:200}),redirect:url=>Response.redirect(url,307)}}};
+  const load=serverModuleLoader(boundaries);
   const login=load('src/app/api/admin/login/route').POST,session=load('src/app/api/admin/session/route').GET,logout=load('src/app/api/admin/logout/route').POST;
   const security=load('src/lib/cab/security'),{proxy}=load('src/proxy');
   const request=(path,body)=>new Request('https://admin-test.invalid/api/admin/'+path,{method:'POST',headers:{Origin:'https://admin-test.invalid','Content-Type':'application/json','x-forwarded-for':randomUUID()},body:JSON.stringify(body||{})});
@@ -75,6 +85,11 @@ try{
     const response=await login(request('login',{email:' '+emails[i].toUpperCase()+' ',password}));
     assert.equal(response.status,200);const result=await response.json();assert.equal(result.role,users[i].role);assert.match(result.requestId,/^[a-f0-9-]{36}$/);assert.equal(response.headers.get('x-request-id'),result.requestId);
     const token=jar.get('cab_ops_session');assert(token);assert(!sessions.has(token));
+    // A fresh module instance retains sessions with the same key and persisted store.
+    const freshSecurity=serverModuleLoader(boundaries)('src/lib/cab/security');assert.equal(await freshSecurity.validateAdminSession(token),users[i].role);
+    const signingSecret=process.env.CAB_SESSION_SECRET;process.env.CAB_SESSION_SECRET=randomBytes(32).toString('hex');
+    assert.equal(await freshSecurity.validateAdminSession(token),null);process.env.CAB_SESSION_SECRET=signingSecret;
+    assert.equal(await freshSecurity.validateAdminSession(token),users[i].role);
     assert.deepEqual(cookieOptions.get('cab_ops_session'),{httpOnly:true,secure:true,sameSite:'strict',path:'/',maxAge:28800});
     assert.equal((await (await session()).json()).authenticated,true);assert.equal((await proxy(protectedRequest())).status,200);
     if(i)await assert.rejects(security.requireCabPermission('finance'));
@@ -108,6 +123,13 @@ try{
     assert.deepEqual(logs.at(-1).configurationProblems,[problem]);assert.equal(sqlCalls,queriesBefore,'Invalid allowlist must fail before database access');
     const body=await response.json();assert.equal(body.configurationProblems,undefined);assert.equal(body.requestId,logs.at(-1).requestId);
     process.env[key]=previous;
+  }
+  for(const [secret,problem] of [['','CAB_SESSION_SECRET_MISSING'],['x'.repeat(31),'CAB_SESSION_SECRET_TOO_SHORT']]){
+    const previous=process.env.CAB_SESSION_SECRET,queriesBefore=sqlCalls;process.env.CAB_SESSION_SECRET=secret;
+    const response=await login(request('login',{email:emails[0],password}));assert.equal(response.status,503);
+    assert.equal(logs.at(-1).code,'ADMIN_SESSION_CONFIGURATION');assert.equal(logs.at(-1).stage,'configuration');assert.deepEqual(logs.at(-1).configurationProblems,[problem]);
+    assert.equal(sqlCalls,queriesBefore);const body=await response.json();assert.equal(body.requestId,logs.at(-1).requestId);assert.equal(body.configurationProblems,undefined);
+    process.env.CAB_SESSION_SECRET=previous;
   }
   databaseFailure={code:'ER_NO_SUCH_TABLE',sqlMessage:"Table 'private_database.users' doesn't exist"};
   assert.equal((await login(request('login',{email:emails[0],password}))).status,503);assert.equal(logs.at(-1).table,'users');assert.equal(logs.at(-1).operation,'admin_login');

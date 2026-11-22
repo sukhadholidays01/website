@@ -1,12 +1,15 @@
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { readAdminAllowlist, AdminConfigurationError } from "../src/lib/auth/admin-allowlist.mjs";
+import { adminSessionConfigurationProblem } from "../src/lib/auth/admin-session-configuration.mjs";
 
 /** This result is safe to share: no input values or raw exception messages. */
 export function checkAdminEnvironment(environment) {
   try {
     readAdminAllowlist(environment);
-    return { ok: true, authorisedAddressCount: 2 };
+    const sessionProblem = adminSessionConfigurationProblem(environment);
+    if (sessionProblem) return { ok: false, code: "ADMIN_SESSION_CONFIGURATION", configurationProblems: [sessionProblem] };
+    return { ok: true, authorisedAddressCount: 2, sessionSigningSecretConfigured: true };
   } catch (error) {
     if (error instanceof AdminConfigurationError) return { ok: false, code: "ADMIN_ALLOWLIST_CONFIGURATION", configurationProblems: error.configurationProblems };
     return { ok: false, code: "ADMIN_ENVIRONMENT_CHECK_UNAVAILABLE" };
