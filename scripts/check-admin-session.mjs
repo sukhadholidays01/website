@@ -3,6 +3,8 @@ import {readFileSync} from 'node:fs';
 import {randomBytes, randomUUID} from 'node:crypto';
 import {serverModuleLoader} from './server-module-loader.mjs';
 import {hashPassword} from '../src/lib/auth/passwords.mjs';
+import {spawnSync} from 'node:child_process';
+import {checkAdminEnvironment} from './check-admin-environment.mjs';
 
 // No dotenv, sockets or database: real auth/session logic against isolated SQL boundaries.
 const saved={...process.env},logs=[],jar=new Map(),cookieOptions=new Map(),sessions=new Map(),buckets=new Map();
@@ -30,6 +32,19 @@ const pool={execute,getConnection:async()=>({execute,beginTransaction:async()=>{
 const cookies={get:key=>jar.has(key)?{value:jar.get(key)}:undefined,set:(key,value,options)=>{jar.set(key,value);cookieOptions.set(key,options);},delete:key=>jar.delete(key)};
 const store={cabStorageMode:()=> 'mysql',changeCabState:()=>{throw Error('Cab state mutation is forbidden in this test');}};
 try{
+  const validEnvironment={ADMIN_EMAIL_1:' '+emails[0].toUpperCase()+' ',ADMIN_EMAIL_2:emails[1]};
+  assert.deepEqual(checkAdminEnvironment(validEnvironment),{ok:true,authorisedAddressCount:2});
+  for(const environment of [{},{NEXT_PUBLIC_ADMIN_EMAIL_1:emails[0],NEXT_PUBLIC_ADMIN_EMAIL_2:emails[1]},{ADMIN_EMAILS:emails.join(',')},{ADMIN_EMAIL_1:emails.join(','),ADMIN_EMAIL_2:emails[1]},{ADMIN_EMAIL_1:'"'+emails[0]+'"',ADMIN_EMAIL_2:emails[1]},{ADMIN_EMAIL_1:emails[0],ADMIN_EMAIL_2:emails[0].toUpperCase()}]){
+    const result=checkAdminEnvironment(environment);assert.equal(result.ok,false);assert.equal(result.code,'ADMIN_ALLOWLIST_CONFIGURATION');assert(!JSON.stringify(result).includes(emails[0]));
+  }
+  const cliEnvironment={...process.env,ADMIN_EMAIL_1:emails[0],ADMIN_EMAIL_2:emails[1]};
+  for(const valid of [true,false]){
+    const environment={...cliEnvironment};if(!valid){delete environment.ADMIN_EMAIL_1;delete environment.ADMIN_EMAIL_2;}
+    const run=spawnSync(process.execPath,['scripts/check-admin-environment.mjs','--production','--process-only'],{encoding:'utf8',env:environment,windowsHide:true});
+    assert(run.status===(valid?0:1),'Preflight must reject missing process variables even when .env.local is present');
+    const result=JSON.parse(run.stdout);assert.equal(result.ok,valid);assert.equal(result.loading,'process-only');
+    assert(!run.stdout.includes(emails[0]));assert(!run.stdout.includes(emails[1]));
+  }
   Object.assign(process.env,{NODE_ENV:'production',ADMIN_EMAIL_1:emails[0],ADMIN_EMAIL_2:emails[1],CAB_SESSION_SECRET:randomBytes(48).toString('hex'),CAB_SITE_ORIGIN:'https://admin-test.invalid',DB_HOST:'isolated.invalid',DB_USER:'fixture',DB_PASSWORD:'fixture-only',DB_NAME:'isolated_dev',DB_PORT:'3306'});
   const encoded=await hashPassword(password);
   users.push(...emails.map((email,i)=>({user_id:randomUUID(),email,password_hash:encoded,role:i?'DISPATCHER':'OWNER',is_active:true})));

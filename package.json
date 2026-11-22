@@ -12,6 +12,7 @@
     "worker:run": "node scripts/run-worker.mjs --loop",
     "test:automation": "node scripts/check-phase4-automation.mjs",
     "test:admin-session": "node scripts/check-admin-session.mjs",
+    "admin:check-env": "node scripts/check-admin-environment.mjs",
     "dev": "next dev",
     "build": "next build --webpack",
     "start": "next start",

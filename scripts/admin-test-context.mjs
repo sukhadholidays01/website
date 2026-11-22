@@ -20,6 +20,7 @@ export function adminTestContext(pool, smtp = {}, store) {
       if(name==="./passwords.mjs")return passwords;
       if(name==="@/lib/email/smtp"&&Object.keys(smtp).length)return smtp;
       if(name.startsWith("@/"))return load(path.join("src",name.slice(2)));
+      if(name.startsWith(".")&&name.endsWith(".mjs"))return native(path.resolve(path.dirname(filename),name));
       if(name.startsWith("."))return load(path.resolve(path.dirname(filename),name));
       return native(name);
     },mod,mod.exports);
