@@ -13,10 +13,12 @@ const emails=[`${randomUUID()}@example.invalid`,`${randomUUID()}@example.invalid
 const password=randomBytes(24).toString('hex');
 let databaseFailure,sqlCalls=0;
 const users=[];
+const customerOnlyAccounts=[];
 async function execute(sql,args=[]){
   sqlCalls++;
   if(databaseFailure)throw databaseFailure;
   if(sql.startsWith('SELECT user_id, password_hash'))return [users.filter(u=>u.email===args[0])];
+  if(sql.includes('FROM customer_accounts'))return [customerOnlyAccounts.filter(u=>u.email===args[0])];
   if(sql.startsWith('INSERT INTO cab_admin_sessions')){sessions.set(args[0],{userId:args[1],expires:args[2]});return [{affectedRows:1}];}
   if(sql.startsWith('DELETE FROM cab_admin_sessions')){sessions.delete(args[0]);return [{affectedRows:1}];}
   if(sql.includes('JOIN users u ON u.user_id = s.user_id')){
@@ -81,6 +83,15 @@ try{
   assert.equal(sqlCalls,before,'No-cookie session discovery must not query any database');
   assert.equal(logs.length,failuresBefore,'Normal logged-out visitors must not generate infrastructure failure logs');
   assert.equal((await proxy(protectedRequest())).status,307);
+  // An allowlisted customer is not a provisioned staff identity. Never fall back
+  // to its valid password and implicitly invent a staff role/session.
+  const staffAccount=users.pop();
+  customerOnlyAccounts.push({account_id:randomUUID(),email:staffAccount.email,password_hash:encoded,email_verified:true,account_status:'ACTIVE'});
+  const sessionCount=sessions.size;
+  assert.equal((await login(request('login',{email:staffAccount.email,password}))).status,401);
+  assert.equal(sessions.size,sessionCount);assert(!jar.get('cab_ops_session'));
+  assert.equal((await proxy(protectedRequest())).status,307);
+  users.push(staffAccount);customerOnlyAccounts.length=0;
   for(let i=0;i<2;i++){
     const response=await login(request('login',{email:' '+emails[i].toUpperCase()+' ',password}));
     assert.equal(response.status,200);const result=await response.json();assert.equal(result.role,users[i].role);assert.match(result.requestId,/^[a-f0-9-]{36}$/);assert.equal(response.headers.get('x-request-id'),result.requestId);

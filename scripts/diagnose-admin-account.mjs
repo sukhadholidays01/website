@@ -20,8 +20,8 @@ export async function diagnoseAdminAccounts(environment, connect = mysql.createC
     if (!rows[0]?.matches_expected) throw Object.assign(new Error(), { code: "DATABASE_TARGET_MISMATCH" });
     const accounts = [];
     for (const [index, email] of emails.entries()) {
-      const [matches] = await db.execute("SELECT (SELECT COUNT(*) FROM users WHERE email = ?) AS lookup_matches, (SELECT COUNT(*) FROM users WHERE LOWER(TRIM(email)) = ?) AS normalized_matches", [email, email]);
-      accounts.push({ slot: index + 1, lookupMatches: Number(matches[0].lookup_matches), normalizedMatches: Number(matches[0].normalized_matches) });
+      const [matches] = await db.execute("SELECT (SELECT COUNT(*) FROM users WHERE email = ?) AS lookup_matches, (SELECT COUNT(*) FROM users WHERE LOWER(TRIM(email)) = ?) AS normalized_matches, (SELECT COUNT(*) FROM customer_accounts WHERE LOWER(TRIM(email)) = ?) AS customer_matches", [email, email, email]);
+      accounts.push({ slot: index + 1, lookupMatches: Number(matches[0].lookup_matches), normalizedMatches: Number(matches[0].normalized_matches), customerAccountMatches: Number(matches[0].customer_matches) });
     }
     return { databaseMatchesIntendedProduction: true, table: "users", accounts };
   } finally { await db.end(); }
