@@ -9,9 +9,13 @@ const saved={...process.env},originalInfo=console.info,originalWarn=console.warn
 const logs=[],mail=[],hash=value=>createHash('sha256').update(value).digest('hex');
 const emails=[`${randomUUID()}@example.invalid`,`${randomUUID()}@example.invalid`],password=randomBytes(24).toString('hex'),nextPassword=randomBytes(24).toString('hex');
 let state={users:[],tokens:new Map(),sessions:new Map(),audit:[]},verifyError,sendError,databaseError,auditFailure=false;
-let queue=Promise.resolve();
+let queue=Promise.resolve(),databaseMatchesConfiguration=true,diagnosticError;
 async function execute(sql,args=[]){
  if(databaseError)throw databaseError;
+ if(sql.startsWith('SELECT DATABASE() = ?')){
+  if(diagnosticError)throw diagnosticError;
+  return [[{database_matches_configuration:Number(databaseMatchesConfiguration),normalized_email_match:Number(state.users.some(u=>u.email.trim().toLowerCase()===args[1]))}]];
+ }
  if(sql.startsWith('INSERT INTO cab_audit_log')){if(auditFailure)throw {code:'ER_NO_SUCH_TABLE'};state.audit.push(args);return [{affectedRows:1}];}
  if(sql.startsWith('SELECT user_id, role, is_active FROM users'))return [state.users.filter(u=>u.email===args[0])];
  if(sql.startsWith('SELECT token_hash FROM admin_password_resets WHERE user_id'))return [[...state.tokens.values()].filter(t=>t.user_id===args[0]&&t.created>Date.now()-60000)];
@@ -63,9 +67,17 @@ try{
   assert(events.some(l=>l.event==='admin_reset_email_result'&&l.status==='skipped'&&l.reason===reason));
   assert(!events.some(l=>l.status==='attempted'||l.status==='accepted'));
   assert.equal(mail.length,before);assert.equal(state.tokens.size,tokenCount);
+  return events;
  };
  await assertSkipped('unlisted@example.invalid','email_not_allowlisted');
- const fixtureUser=state.users.shift();await assertSkipped(emails[0],'account_missing');state.users.unshift(fixtureUser);
+ const fixtureUser=state.users.shift();
+ let missingEvents=await assertSkipped(emails[0],'account_missing');
+ assert(missingEvents.some(l=>l.table==='users'&&l.databaseMatchesConfiguration===true&&l.normalizedEmailMatch===false));
+ databaseMatchesConfiguration=false;missingEvents=await assertSkipped(emails[0],'account_missing');assert(missingEvents.some(l=>l.databaseMatchesConfiguration===false));databaseMatchesConfiguration=true;
+ diagnosticError={code:'ER_NO_SUCH_TABLE'};missingEvents=await assertSkipped(emails[0],'account_missing');assert(missingEvents.some(l=>l.stage==='account_lookup_diagnostic'&&l.table==='users'&&l.code==='ER_NO_SUCH_TABLE'));diagnosticError=undefined;
+ state.users.unshift(fixtureUser);
+ const storedEmail=state.users[0].email;state.users[0].email=' '+storedEmail.toUpperCase();
+ missingEvents=await assertSkipped(emails[0],'account_missing');assert(missingEvents.some(l=>l.normalizedEmailMatch===true));state.users[0].email=storedEmail;
  state.users[0].is_active=false;await assertSkipped(emails[0],'account_inactive');state.users[0].is_active=true;
  const fixtureRole=state.users[0].role;state.users[0].role='CUSTOMER';await assertSkipped(emails[0],'account_role_ineligible');state.users[0].role=fixtureRole;
  const received=await request('request',{email:emails[0]});assert.equal(received.status,200);const ack=await received.json();assert.equal(received.headers.get('x-request-id'),ack.requestId);

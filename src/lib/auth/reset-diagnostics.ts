@@ -5,7 +5,7 @@ export function resetFailureCode(error: unknown) {
   return typeof value?.code === "string" && codes.has(value.code) ? value.code : "UNEXPECTED";
 }
 export type ResetSkipReason = "email_not_allowlisted" | "account_missing" | "account_inactive" | "account_role_ineligible" | "cooldown_active";
-type Details = { operation?: "request" | "validate" | "confirm"; stage?: string; status?: "attempted" | "accepted" | "failed" | "skipped"; valid?: boolean; reason?: "invalid" | "expired" | ResetSkipReason; smtpConfigured?: boolean; originConfigured?: boolean; configurationProblems?: string[]; code?: string; responseCode?: number };
+type Details = { operation?: "request" | "validate" | "confirm"; stage?: string; status?: "attempted" | "accepted" | "failed" | "skipped"; valid?: boolean; reason?: "invalid" | "expired" | ResetSkipReason; table?: "users"; databaseMatchesConfiguration?: boolean; normalizedEmailMatch?: boolean; smtpConfigured?: boolean; originConfigured?: boolean; configurationProblems?: string[]; code?: string; responseCode?: number };
 /** Call sites pass only fixed statuses/codes, never request bodies, tokens or recipients. */
 export function resetDiagnostic(event: "admin_reset_request_received" | "admin_reset_configuration" | "admin_reset_email_result" | "admin_reset_token_validation" | "admin_reset_failure", requestId: string, details: Details = {}) {
   const entry = JSON.stringify({ event, requestId, ...details });

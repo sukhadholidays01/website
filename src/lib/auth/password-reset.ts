@@ -58,7 +58,23 @@ export async function requestAdminPasswordReset(body: unknown, requestId = rando
     const [users] = await db.execute<RowDataPacket[]>("SELECT user_id, role, is_active FROM users WHERE email = ? FOR UPDATE", [recipient]);
     const user = users[0];
     const skipReason: ResetSkipReason | undefined = !user ? "account_missing" : !user.is_active ? "account_inactive" : !staffRole(user.role) ? "account_role_ineligible" : undefined;
-    if (skipReason) { await db.rollback(); skipped(skipReason); return; }
+    if (skipReason) {
+      await db.rollback();
+      if (skipReason === "account_missing") {
+        // Read-only diagnostics. Never change lookup semantics or reveal identities.
+        // This compares to configured DB_NAME, not to an independently verified target.
+        try {
+          const [diagnostics] = await db.execute<RowDataPacket[]>(
+            "SELECT DATABASE() = ? AS database_matches_configuration, EXISTS(SELECT 1 FROM users WHERE LOWER(TRIM(email)) = ?) AS normalized_email_match",
+            [process.env.DB_NAME || "", recipient]);
+          resetDiagnostic("admin_reset_email_result", requestId, { status: "skipped", reason: skipReason, table: "users", databaseMatchesConfiguration: Boolean(diagnostics[0]?.database_matches_configuration), normalizedEmailMatch: Boolean(diagnostics[0]?.normalized_email_match) });
+        } catch (error) {
+          resetDiagnostic("admin_reset_failure", requestId, { stage: "account_lookup_diagnostic", table: "users", code: resetFailureCode(error) });
+          skipped(skipReason);
+        }
+      } else { skipped(skipReason); }
+      return;
+    }
     const [recent] = await db.execute<RowDataPacket[]>("SELECT token_hash FROM admin_password_resets WHERE user_id = ? AND created_at > DATE_SUB(UTC_TIMESTAMP(3), INTERVAL 1 MINUTE)", [user.user_id]);
     if (recent.length) { await db.rollback(); skipped("cooldown_active"); return; }
     await db.execute("DELETE FROM admin_password_resets WHERE user_id = ?", [user.user_id]);
