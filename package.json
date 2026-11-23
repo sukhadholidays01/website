@@ -8,10 +8,12 @@
     "npm": ">=10"
   },
   "scripts": {
+    "test:whatsapp": "node scripts/check-whatsapp-webhook.mjs",
     "worker:once": "node scripts/run-worker.mjs",
     "worker:run": "node scripts/run-worker.mjs --loop",
     "test:automation": "node scripts/check-phase4-automation.mjs",
     "test:admin-session": "node scripts/check-admin-session.mjs",
+    "test:admin-reset": "node scripts/check-admin-reset-isolated.mjs",
     "admin:check-env": "node scripts/check-admin-environment.mjs",
     "dev": "next dev",
     "build": "next build --webpack",
