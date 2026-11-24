@@ -1,0 +1,31 @@
+{
+  "stage": "multi-day",
+  "checks": [
+    "Planner, map, selected state and no overflow at 1440",
+    "Planner, map, selected state and no overflow at 1024",
+    "Planner, map, selected state and no overflow at 820",
+    "Planner, map, selected state and no overflow at 390",
+    "Planner, map, selected state and no overflow at 360",
+    "Mapbox pickup/drop, original query retention, min length, map attribution, pin adjustment and server signature",
+    "vehicles: tablet/mobile layout without overflow",
+    "review: tablet/mobile layout without overflow",
+    "one-way: validation, preview, vehicles, server fare, passenger, payment arrangement, consents, unchanged payload, idempotent domain submission, pending reference and retrieval UI",
+    "round-trip: validation, preview, vehicles, server fare, passenger, payment arrangement, consents, unchanged payload, idempotent domain submission, pending reference and retrieval UI",
+    "airport: validation, preview, vehicles, server fare, passenger, payment arrangement, consents, unchanged payload, idempotent domain submission, pending reference and retrieval UI",
+    "custom: validation, preview, vehicles, server fare, passenger, payment arrangement, consents, unchanged payload, idempotent domain submission, pending reference and retrieval UI",
+    "multi-day: validation, preview, vehicles, server fare, passenger, payment arrangement, consents, unchanged payload, idempotent domain submission, pending reference and retrieval UI"
+  ],
+  "runtimeErrors": [],
+  "consoleErrors": [],
+  "mapTiles": 66,
+  "pinConfirmations": 1,
+  "submittedModes": [
+    "one-way",
+    "round-trip",
+    "airport",
+    "custom",
+    "multi-day"
+  ],
+  "isolation": "Existing domain services in memory; API/auth/persistence and Mapbox image/geocoder transport fixtures. No real database, geocoder, email or payments.",
+  "passed": true
+}

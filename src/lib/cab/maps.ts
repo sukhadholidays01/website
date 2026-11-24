@@ -4,18 +4,21 @@ import { cabPlaces } from "@/data/cabPlaces";
 import type { CabJourney, CabPlace, CabRoute } from "./types";
 import { CabError } from "./security";
 import { createHmac } from "node:crypto";
+import { inIndiaBounds, mapboxForward, mapboxSearchEnabled, requireMapboxGeocoding } from "./mapbox-geocoding";
+import { placeSchema } from "./validation";
 
 const placeCache = new Map<string, { until: number; value: CabPlace[] }>();
 const mapSecret = () => process.env.CAB_SESSION_SECRET || "";
-function placeSignature(p: Omit<CabPlace, "id">) {
+function placeSignature(p: Omit<CabPlace, "id">, scope = "") {
   return createHmac("sha256", mapSecret())
-    .update(JSON.stringify([p.label, p.city, p.lat, p.lon, Boolean(p.airport)]))
+    .update(scope + JSON.stringify([p.label, p.city, p.lat, p.lon, Boolean(p.airport)]))
     .digest("hex");
 }
 export function canonicalPlace(place: CabPlace): CabPlace {
   const known = cabPlaces.find((p) => p.id === place.id);
   if (known) return known;
-  if (!mapSecret() || place.id !== "osm-" + placeSignature(place))
+  const prefix = place.id.startsWith("mapbox-pin-") ? "mapbox-pin-" : place.id.startsWith("mapbox-") ? "mapbox-" : place.id.startsWith("pin-") ? "pin-" : "osm-";
+  if (!mapSecret() || place.id !== prefix + placeSignature(place, prefix === "osm-" ? "" : prefix))
     throw new CabError("Search for and select this location again.");
   return place;
 }
@@ -30,11 +33,23 @@ export async function lookupCabRoute(journey: CabJourney): Promise<CabRoute> {
     returnDurationMinutes: inbound.durationMinutes,
   };
 }
-export async function searchCabPlaces(query: string): Promise<CabPlace[]> {
+export async function searchCabPlaces(query: string, proximity?: { lat: number; lon: number }): Promise<CabPlace[]> {
   const local = cabPlaces.filter((p) =>
     `${p.label} ${p.city}`.toLowerCase().includes(query.toLowerCase()),
   );
   const base = process.env.CAB_GEOCODER_URL;
+  if (mapboxSearchEnabled() && query.length >= 3) {
+    if (!mapSecret()) throw new CabError("Address search requires a server session secret.", 503);
+    requireMapboxGeocoding();
+    const key = JSON.stringify(["mapbox-permanent", query.toLowerCase(), proximity?.lat, proximity?.lon]);
+    const cached = placeCache.get(key);
+    if (cached && cached.until > Date.now()) return [...cached.value, ...local];
+    const places = (await mapboxForward(query, proximity)).map(p => ({ ...p, id: "mapbox-" + placeSignature(p, "mapbox-") }));
+    if (placeCache.size >= 500) placeCache.clear();
+    // All Mapbox requests use permanent=true; never cache temporary results.
+    placeCache.set(key, { until: Date.now() + 86400000, value: places });
+    return [...places, ...local.filter(p => !places.some(r => r.label === p.label))];
+  }
   // No default public Nominatim integration: operator must deliberately configure a suitable service.
   if (!base || query.length < 3) return local;
   if (!mapSecret())
@@ -104,4 +119,15 @@ export async function searchCabPlaces(query: string): Promise<CabPlace[]> {
     value: places,
   });
   return [...local, ...places];
+}
+
+export function confirmCabPin(input: unknown): CabPlace {
+  if (!mapSecret()) throw new CabError("Pin confirmation is not configured.", 503);
+  const body = input as { place?: unknown; lat?: unknown; lon?: unknown };
+  const base = canonicalPlace(placeSchema.parse(body?.place));
+  if (typeof body.lat !== "number" || typeof body.lon !== "number" || !inIndiaBounds(body.lat, body.lon)) throw new CabError("Choose a valid pin within India.");
+  if (base.id.startsWith("mapbox-")) requireMapboxGeocoding();
+  const place = { label: base.label, city: base.city, airport: Boolean(base.airport), lat: body.lat, lon: body.lon };
+  const prefix = base.id.startsWith("mapbox-") ? "mapbox-pin-" : "pin-";
+  return { ...place, id: prefix + placeSignature(place, prefix), name: base.name, featureType: "customer-pin", accuracy: "customer-adjusted" };
 }

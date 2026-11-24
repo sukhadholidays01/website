@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 import path from "node:path";
 
+// NEXT_PUBLIC values are embedded at build time: reject secrets before bundling.
+if (process.env.NEXT_PUBLIC_CAB_MAPBOX_TOKEN && !/^pk\.[A-Za-z0-9._-]+$/.test(process.env.NEXT_PUBLIC_CAB_MAPBOX_TOKEN)) {
+  throw new Error("NEXT_PUBLIC_CAB_MAPBOX_TOKEN must be a public pk. Mapbox token, never a secret token.");
+}
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   webpack(config, { dir }) {

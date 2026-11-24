@@ -18,6 +18,11 @@ export interface CabPlace {
   lat: number;
   lon: number;
   airport?: boolean;
+  // Search presentation only; the booking schema strips these optional fields.
+  name?: string;
+  context?: string;
+  featureType?: string;
+  accuracy?: string;
 }
 export interface CabJourney {
   tripType: CabTripType;

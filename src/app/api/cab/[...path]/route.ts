@@ -32,7 +32,8 @@ import {
   publicBooking,
   searchCabJourney,
 } from "@/lib/cab/service";
-import { searchCabPlaces } from "@/lib/cab/maps";
+import { searchCabPlaces, confirmCabPin } from "@/lib/cab/maps";
+import { inIndiaBounds, mapboxSearchEnabled } from "@/lib/cab/mapbox-geocoding";
 import { configSchema } from "@/lib/cab/validation";
 import {
   previewManagedRoute,
@@ -178,14 +179,27 @@ async function legacyHandle(request: Request, context: Context) {
     if (route === "session" && method === "GET") return adminSession();
     if (route === "session" && method === "POST") return adminLogin(request);
     if (route === "session" && method === "DELETE") return adminLogout(request);
+    if (route === "places" && method === "POST") {
+      await limitRequest(request, "place-pin", 20);
+      return privateJson({ place: confirmCabPin(await readBody(request)) });
+    }
     if (route === "places" && method === "GET") {
-      const query = (new URL(request.url).searchParams.get("q") || "").trim();
+      const params = new URL(request.url).searchParams;
+      const query = (params.get("q") || "").trim();
       if (query.length < 2 || query.length > 150)
         throw new CabError("Enter 2–150 characters to search.");
       await limitRequest(request, "places", 20);
+      let proximity;
+      if (params.has("proximity")) {
+        const parts = params.get("proximity")!.split(",");
+        if (parts.length !== 2 || parts.some(p => !p.trim())) throw new CabError("Invalid search proximity.");
+        const [lon, lat] = parts.map(Number);
+        if (!inIndiaBounds(lat, lon)) throw new CabError("Invalid search proximity.");
+        proximity = { lat, lon };
+      }
       return privateJson({
-        places: await searchCabPlaces(query),
-        externalSearch: Boolean(process.env.CAB_GEOCODER_URL),
+        places: await searchCabPlaces(query, proximity),
+        externalSearch: mapboxSearchEnabled() || Boolean(process.env.CAB_GEOCODER_URL),
       });
     }
     if (route === "quote" && method === "POST") {
@@ -314,7 +328,7 @@ async function legacyHandle(request: Request, context: Context) {
                         process.env.CAB_MAPBOX_TOKEN ||
                         process.env.MAP_BOX_ACCESS_TOKEN,
                       ),
-              geocodingConfigured: Boolean(process.env.CAB_GEOCODER_URL),
+              geocodingConfigured: mapboxSearchEnabled() || Boolean(process.env.CAB_GEOCODER_URL),
             },
           },
         });

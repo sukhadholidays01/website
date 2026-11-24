@@ -150,7 +150,7 @@ function BookingStatusContent({id,assurance,privateLink}:{id:string;assurance:"l
       ? "Open the complete private booking link, including its access code."
       : "");
   return (
-    <div className="cab-live">
+    <div className="cab-live cb-receipt">
       <div className="cb-container">
         <div className="cb-status-top">
           <Link href="/cabs" className="cb-text-link">

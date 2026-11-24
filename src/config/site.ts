@@ -4,10 +4,11 @@ export const siteConfig = {
   title: "Sukhad Holidays | Cabs, Bus, Flights & Holidays Services",
   description: "Discover destinations, explore sample journeys and plan flights, holidays, bus trips, cabs and custom routes with Sukhad Holidays.",
   navigation: [
+     { label: "Holiday Packages", href: "/holidays" },
     { label: "Cabs", href: "/cabs" },
     { label: "Bus", href: "/bus" },
     { label: "Flights", href: "/flights" },
-    { label: "Holiday Packages", href: "/holidays" },
+   
     { label: "Custom Routes", href: "/custom-routes" },
   ],
   countries: ["India", "UAE", "United States", "United Kingdom", "Singapore", "Australia"],

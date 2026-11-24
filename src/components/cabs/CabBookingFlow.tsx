@@ -14,6 +14,10 @@ import {
   MapPin,
   Plane,
   ShieldCheck,
+  Route,
+  CalendarDays,
+  Repeat2,
+  Navigation,
 } from "lucide-react";
 import { cabPlaces } from "@/data/cabPlaces";
 import { cabApi } from "@/lib/cab/client";
@@ -27,6 +31,7 @@ import {
   type PublicCabBooking,
 } from "@/lib/cab/types";
 import "./cab-live.css";
+import "./cab-planner.css";
 import { PlacePicker } from "./PlacePicker";
 import Link from "next/link";
 import type { CabCatalogue, VehicleOption } from "@/lib/cab/models";
@@ -51,6 +56,14 @@ const initial: CabJourney = {
   pickupAddress: "",
   dropAddress: "",
   flightNumber: "",
+};
+const journeyModes = {
+  "one-way": { icon: Navigation, hint: "City to city" },
+  "round-trip": { icon: Repeat2, hint: "Go and return" },
+  airport: { icon: Plane, hint: "Arrivals & departures" },
+  custom: { icon: Route, hint: "Your own journey" },
+  "multi-day": { icon: CalendarDays, hint: "Stops & overnight stays" },
+  local: { icon: Clock3, hint: "Hourly packages" },
 };
 type Quote = {
   journey: CabJourney;
@@ -114,6 +127,7 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
   });
   const [step, setStep] = useState<"journey" | "ride" | "fare" | "passenger" | "payment" | "review">("journey");
   const [quote, setQuote] = useState<Quote>();
+  const [selectedLocation, setSelectedLocation] = useState<CabJourney["origin"]>();
   const [searchResult, setSearchResult] = useState<Quote>();
   const [catalogue, setCatalogue] = useState<CabCatalogue>();
   const [catalogueError, setCatalogueError] = useState("");
@@ -150,6 +164,8 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
   const [consent, setConsent] = useState(false);
   const [privacyConsent,setPrivacyConsent]=useState(false);
   const [busy, setBusy] = useState(false);
+  const journeyRevision = useRef(0);
+  const previewRequest = useRef<{ input: string; result: Quote; until: number } | undefined>(undefined);
   const [error, setError] = useState("");
   useToastFeedback(error || catalogueError);
   const heading = useRef<HTMLHeadingElement>(null);
@@ -163,6 +179,8 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
     setTimeout(() => heading.current?.focus(), 0);
   };
   const change = (patch: Partial<CabJourney>) => {
+    journeyRevision.current++;
+    previewRequest.current = undefined;
     setJourney((j) => ({
       ...j,
       ...patch,
@@ -203,7 +221,8 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
       setBusy(false);
     }
   }
-  async function searchJourney() {
+  async function searchJourney(previewOnly = false) {
+    const revision = journeyRevision.current;
     setBusy(true);
     setError("");
     setFieldErrors({});
@@ -226,15 +245,18 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
       return;
     }
     try {
-      const result = await cabApi<Quote>("search", {
+      const searchInput = JSON.stringify({ journey: { ...journey, vehicle: compatible } });
+      const result = previewRequest.current?.input === searchInput && previewRequest.current.until > Date.now() ? previewRequest.current.result : await cabApi<Quote>("search", {
         method: "POST",
         body: { journey: { ...journey, vehicle: compatible } },
       });
+      if (revision !== journeyRevision.current) return;
+      previewRequest.current = { input: JSON.stringify({ journey: result.journey }), result, until: Date.now() + 30000 };
       setSearchResult(result);
       setJourney(result.journey);
-      go("ride");
+      if (!previewOnly) go("ride");
     } catch (e) {
-      setError(formatError(e));
+      if (revision === journeyRevision.current) setError(formatError(e));
     } finally {
       setBusy(false);
     }
@@ -289,7 +311,7 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
   const visualRoute = quote?.previewRoute || searchResult?.previewRoute || quote?.route || searchResult?.route;
   const packages = activeRoute?.fares[journey.vehicle]?.hourlyPackages || [];
   return (
-    <div className="cab-live cb-booking">
+    <div className="cab-live cb-booking cb-planner" data-booking-step={step}>
       <div className="cb-container">
         <header className="cb-hero">
           <div>
@@ -297,31 +319,18 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
               <Car size={17} /> SUKHADH HOLIDAYS / CAB JOURNEYS
             </p>
             <h1 ref={heading} tabIndex={-1}>
-              Every mile.
-              <br />
-              <em>Your way.</em>
+              Your journey, <em>beautifully planned.</em>
             </h1>
             <p>
-              One-way journeys, return trips and airport transfers.
-              <br />
-              Plan your ride. We’ll take care of the road.
+              Choose your route. Find your ride. Leave the rest to our team.
             </p>
           </div>
-          <div className="cb-hero-note">
-            <ShieldCheck size={28} />
-            <strong>Request a Cab.</strong>
-            <span>
-              Review your fare before accepting. Your team confirms availability
-              before your booking is final.
-            </span>
-          </div>
+          <Link href="/cabs/track" className="cb-btn cb-existing-booking">Access an existing booking</Link>
         </header>
         <p className="cb-callout" role="status">
           {catalogue?.persistent ? (
             <>
-              <strong>Booking request, not confirmation.</strong> Submit your
-              journey for review. The team will confirm the fare and vehicle
-              availability before the ride is final. Payment options follow admin confirmation.
+              <ShieldCheck size={18} aria-hidden="true" /><span><strong>Your request comes first.</strong> Our team confirms the final fare and vehicle availability. No payment collected now.</span>
             </>
           ) : catalogue ? (
             <>
@@ -364,7 +373,7 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
                     String(i + 1).padStart(2, "0")
                   )}
                 </span>
-                {label}
+                <span className="cb-step-label">{label}</span>
               </li>
             ),
           )}
@@ -377,36 +386,40 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
         <div className="cb-layout">
           <section className="cb-main-card">
             {step === "journey" && (
-              <form
+              <form id="cab-journey-form" aria-busy={busy}
                 onSubmit={(e) => {
                   e.preventDefault();
                   void searchJourney();
                 }}
               >
                 <div className="cb-section-top">
-                  <p className="cb-eyebrow">01 / THE JOURNEY</p>
-                  <h2>Where are we taking you?</h2>
+                  <p className="cb-eyebrow">THE JOURNEY</p>
+                  <h2>Where would you like to go?</h2>
                 </div>
-                <div className="cb-tabs" aria-label="Trip type">
-                  {(catalogue?.enabledTripTypes || []).map((type) => (
+                <div className="cb-tabs" role="group" aria-label="Trip type">
+                  {(catalogue?.enabledTripTypes || []).map((type) => {
+                    const ModeIcon = journeyModes[type].icon;
+                    return (
                     <button
                       type="button"
+                      aria-label={tripLabels[type]}
                       aria-pressed={journey.tripType === type}
                       className={journey.tripType === type ? "selected" : ""}
                       key={type}
                       onClick={() => trip(type)}
                     >
-                      {type === "airport" && <Plane size={15} />}{" "}
-                      {tripLabels[type]}
+                      <ModeIcon size={18} aria-hidden="true" />
+                      <span>{tripLabels[type]}<small>{journeyModes[type].hint}</small></span>
+                      {journey.tripType === type && <Check size={14} className="cb-mode-check" aria-hidden="true" />}
                     </button>
-                  ))}
+                  );})}
                 </div>
                 {!catalogue && !catalogueError && (
                   <p role="status">Loading configured trips…</p>
                 )}
                 {catalogue && (
                   <label>
-                    <span>Configured route</span>
+                    <span>Choose a listed route <small>(optional)</small></span>
                     <select
                       aria-label="Configured route"
                       value={journey.routeId || ""}
@@ -415,6 +428,8 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
                           (r) => r.id === e.target.value,
                         );
                         if (r) {
+                          journeyRevision.current++;
+                          previewRequest.current = undefined;
                           setJourney((j) => ({
                             ...j,
                             routeId: r.id,
@@ -430,7 +445,7 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
                       }}
                     >
                       <option value="">
-                        Choose locations / custom quote enquiry
+                        Plan with your own locations
                       </option>
                       {catalogue.routes
                         .filter((r) => r.tripTypes.includes(journey.tripType))
@@ -479,8 +494,9 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
                         : "Pickup city / location"
                     }
                     value={journey.origin}
+                    proximity={selectedLocation}
                     airport={airport && journey.airportDirection === "pickup"}
-                    onChange={(p) => change({ origin: p })}
+                    onChange={(p) => { setSelectedLocation(p); change({ origin: p }); }}
                   />
                   {!airport && (
                     <button
@@ -506,8 +522,9 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
                         : "Drop city / location"
                     }
                     value={journey.destination}
+                    proximity={selectedLocation}
                     airport={airport && journey.airportDirection === "drop"}
-                    onChange={(p) => change({ destination: p })}
+                    onChange={(p) => { setSelectedLocation(p); change({ destination: p }); }}
                   />
                 </div>
                 <div className="cb-fields">
@@ -628,10 +645,14 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
                   </p>
                 ))}
                 <p className="cb-note">
-                  No suitable configured route? Enter your locations for a
-                  custom quote, or{" "}
+                  Planning somewhere else? Choose your locations for a
+                  personal quote, or{" "}
                   <Link href="/custom-routes">plan a custom journey</Link>.
                 </p>
+                <div className="cb-actions cb-journey-actions">
+                <button type="button" className="cb-btn" disabled={busy || !catalogue} onClick={() => void searchJourney(true)}>
+                  <Route size={17} aria-hidden="true" />{busy ? "Checking journey…" : "Preview route"}
+                </button>
                 <button
                   className="cb-btn cb-primary"
                   type="submit"
@@ -644,6 +665,7 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
                   {busy ? "Checking configured rides…" : "Choose your ride"}{" "}
                   <ArrowRight size={17} />
                 </button>
+                </div>
               </form>
             )}
             {step === "ride" && (
@@ -708,6 +730,7 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
                           ? cabMoney(v.fare.total)
                           : "Request a quote"}
                       </strong>
+                      {v.fare?.total !== null && v.fare?.total !== undefined && <span className="cb-estimate-label">Estimated fare · subject to confirmation</span>}
                       <small>
                         {!v.requestOnly && journey.passengers > v.seats
                           ? "Too few seats for your group"
@@ -935,16 +958,28 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
                 <div className="cb-actions"><button type="button" className="cb-btn" disabled={busy} onClick={()=>go("journey")}>Edit journey</button><button type="button" className="cb-btn" disabled={busy} onClick={()=>go("passenger")}>Edit passenger details</button><button type="button" className="cb-btn cb-primary" disabled={busy||!consent||!privacyConsent} onClick={()=>void submit()}>{busy?"Saving your request...":"Send booking request"}<ArrowRight size={17}/></button></div>
             </section>}
           </section>
-          <aside className="cb-aside">
+          <aside className="cb-aside" aria-label="Your trip summary">
             <div className="cb-aside-heading">
-              <p className="cb-eyebrow">YOUR ROAD AHEAD</p>
+              <p className="cb-eyebrow">YOUR JOURNEY AT A GLANCE</p>
               <span>{tripLabels[journey.tripType]}</span>
             </div>
             <CabMap
               origin={journey.origin}
               destination={journey.destination}
               route={visualRoute}
+              stops={journey.itinerary?.stops.map(stop => stop.place)}
+              useMapbox
+              focusPlace={selectedLocation}
+              onConfirmPin={step === "journey" ? async (target, coordinates) => {
+                const revision = journeyRevision.current;
+                const { place } = await cabApi<{ place: CabJourney["origin"] }>("places", { method: "POST", body: { place: journey[target], ...coordinates } });
+                if (revision !== journeyRevision.current) throw Error("Journey changed during pin confirmation");
+                setSelectedLocation(place); change({ [target]: place });
+              } : undefined}
             />
+            <div className="cb-preview-status" role="status" aria-live="polite">
+              {busy ? "Checking your journey. Road routing may take a moment…" : quote?.previewWarning || searchResult?.previewWarning ? "Some road segments could not be verified. Our team will check the complete route." : visualRoute?.source === "demo" ? "Development route fixture; no live road route is shown." : visualRoute?.geometry.length ? "Road route shown for your selected map locations." : searchResult || quote ? "The road preview is unavailable. Our team will verify the route with your quote." : "Your selected locations are on the map. Add your addresses and travel dates, then preview the road route."}
+            </div>
             {(quote?.previewWarning || searchResult?.previewWarning) && <p className="cb-note" role="status">{quote?.previewWarning || searchResult?.previewWarning}</p>}
             <div className="cb-route-info">
               <p>
@@ -956,7 +991,7 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
                 <MapPin size={16} />
                 <strong>{journey.destination.label}</strong>
               </p>
-              {visualRoute && (
+              {visualRoute && visualRoute.source !== "demo" && (
                 <div className="cb-route-stats">
                   <span>{visualRoute.distanceKm} km outward</span>
                   <span>
@@ -969,21 +1004,29 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
                   )}
                 </div>
               )}
+              <dl className="cb-summary-facts">
+                <div><dt>Pickup · IST</dt><dd>{journey.departure ? journey.departure.replace("T", " · ") : "Choose a date & time"}</dd></div>
+                {journey.returnAt && <div><dt>Return · IST</dt><dd>{journey.returnAt.replace("T", " · ")}</dd></div>}
+                <div><dt>Your group</dt><dd>{journey.passengers} {journey.passengers === 1 ? "passenger" : "passengers"}</dd></div>
+                {journey.luggage && <div><dt>Luggage / instructions</dt><dd>{journey.luggage}</dd></div>}
+                {quote && <div><dt>Vehicle preference</dt><dd>{availableOptions.find(option => option.id === journey.vehicle)?.name || journey.vehicle}</dd></div>}
+                {quote && <div><dt>{quote.fare.total === null ? "Fare status" : "Estimated fare"}</dt><dd>{quote.fare.total === null ? "Quote required" : cabMoney(quote.fare.total)}</dd></div>}
+              </dl>
               <p className="cb-note">
                 Route estimates use your selected map points. Your final quote
                 confirms the exact pickup and drop addresses. Traffic, tolls and
                 stops can affect the journey.
               </p>
             </div>
-            <div className="cb-next">
-              <strong>What happens next?</strong>
+            <details className="cb-next">
+              <summary>What happens after your request?</summary>
               <ol>
                 <li>Send your journey request</li>
                 <li>Review and accept your final quote</li>
                 <li>Receive confirmation and driver details</li>
                 <li>Choose an enabled payment arrangement</li>
               </ol>
-            </div>
+            </details>
           </aside>
         </div>
         <p className="cb-footer-note">
