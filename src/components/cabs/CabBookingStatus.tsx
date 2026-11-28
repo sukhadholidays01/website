@@ -26,9 +26,9 @@ const accessSnapshot = () =>
   new URLSearchParams(window.location.hash.slice(1)).get("access") || "";
 const statusText: Record<CabStatus, { title: string; description: string }> = {
   REQUESTED: {
-    title: "Your request is received.",
+    title: "Your trip request has been received.",
     description:
-      "The cab team will contact you to confirm the fare and vehicle availability. Your ride is pending review. Keep your private booking link.",
+      "Sukhad Holidays will review your journey and send a quotation. Your request is pending review; keep your private booking link.",
   },
   QUOTED: {
     title: "Your quote is ready.",

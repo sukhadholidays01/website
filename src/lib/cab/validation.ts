@@ -53,8 +53,8 @@ export const journeySchema = z
     routeId: text(100).optional(),
     packageId: text(100).optional(),
     durationHours: z.number().int().min(1).max(720).optional(),
-    pickupAddress: text(400).min(5, "Enter your pickup address or terminal."),
-    dropAddress: text(400).min(5, "Enter your drop address or terminal."),
+    pickupAddress: text(400).default(""),
+    dropAddress: text(400).default(""),
     luggage: text(200).optional(),
     itinerary: z.object({ stops: z.array(z.object({ place: placeSchema, overnight: z.boolean(), notes: text(300) })).min(1).max(12), dailyDistanceKm: z.number().finite().int().min(1).max(1000).optional(), requirements: text(1500) }).optional(),
   })
@@ -65,11 +65,12 @@ export const journeySchema = z
       const ids=j.itinerary?.stops.map(s=>s.place.id)||[];
       if (new Set(ids).size!==ids.length) c.addIssue({code:"custom",path:["itinerary"],message:"Use each intermediate destination once; describe return visits in itinerary notes."});
     } else if (j.itinerary) c.addIssue({code:"custom",path:["itinerary"],message:"An itinerary is only valid for multi-day travel."});
-    if (indiaTime(j.departure) < Date.now() + 15 * 60000)
+    // Inputs have minute precision: accept the current minute, reject earlier minutes.
+    if (indiaTime(j.departure) < Math.floor(Date.now() / 60000) * 60000)
       c.addIssue({
         code: "custom",
         path: ["departure"],
-        message: "Choose a pickup at least 15 minutes from now (India time).",
+        message: "Choose the current time or a future pickup time (India time).",
       });
     if (
       j.tripType !== "local" &&

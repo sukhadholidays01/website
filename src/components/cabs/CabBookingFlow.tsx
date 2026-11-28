@@ -5,11 +5,9 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import {
-  ArrowRight,
   ArrowLeft,
   ArrowDownUp,
   Car,
-  Check,
   Clock3,
   MapPin,
   Plane,
@@ -93,7 +91,7 @@ export function FareDetails({ fare }: { fare: CabFare }) {
                   : "Distance-based estimate"}
         </span>
         <strong>
-          {fare.total === null ? "Fare will be shared after confirmation" : cabMoney(fare.total)}
+          {fare.total === null ? "Quotation prepared by our team" : cabMoney(fare.total)}
         </strong>
       </div>
       {fare.lines.map((line, i) => (
@@ -125,7 +123,9 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
     const passengers=Number(prefill.travellers);
     return {...initial,origin:place(prefill.from)||initial.origin,destination:place(prefill.to)||initial.destination,departure:date(prefill.departure),returnAt:prefill.tripType==='Round trip'?date(prefill.return):'',tripType:prefill.tripType==='Round trip'?'round-trip':'one-way',passengers:Number.isInteger(passengers)&&passengers>=1&&passengers<=6?passengers:initial.passengers};
   });
-  const [step, setStep] = useState<"journey" | "ride" | "fare" | "passenger" | "payment" | "review">("journey");
+  const [step, setStep] = useState<"journey" | "ride" | "passenger" | "review">("journey");
+  const [mapOpen, setMapOpen] = useState(false);
+  const [pendingLocations, setPendingLocations] = useState({ origin: false, destination: false });
   const [quote, setQuote] = useState<Quote>();
   const [selectedLocation, setSelectedLocation] = useState<CabJourney["origin"]>();
   const [searchResult, setSearchResult] = useState<Quote>();
@@ -206,6 +206,7 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
     });
   }
   async function getQuote() {
+    const revision = journeyRevision.current;
     setBusy(true);
     setError("");
     try {
@@ -213,8 +214,9 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
         method: "POST",
         body: { journey },
       });
+      if (revision !== journeyRevision.current) return;
       setQuote(result);
-      go("fare");
+      go("passenger");
     } catch (e) {
       setError(formatError(e));
     } finally {
@@ -222,6 +224,7 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
     }
   }
   async function searchJourney(previewOnly = false) {
+    if (pendingLocations.origin || pendingLocations.destination || document.querySelector("#cab-journey-form .cb-place input:invalid")) { setError("Choose a suggested location or keep your previous selection before continuing."); return; }
     const revision = journeyRevision.current;
     setBusy(true);
     setError("");
@@ -296,7 +299,7 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
         method: "POST",
         body: { reference: booking.id, token: request.current.token },
       });
-      notify({kind:"success",title:"Booking request received",description:"Your reference is ready. The team will confirm your fare and availability."});
+      notify({kind:"success",title:"Your trip request has been received.",description:"Your reference is ready. The team will confirm your fare and availability."});
       router.push(link);
     } catch (e) {
       setError(formatError(e));
@@ -304,12 +307,13 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
       setBusy(false);
     }
   }
-  const currentStep = ["journey", "ride", "fare", "passenger", "payment", "review"].indexOf(step);
+
   const airport = journey.tripType === "airport";
   const availableOptions = searchResult?.options || [];
   const activeRoute = catalogue?.routes.find((r) => r.id === journey.routeId);
   const visualRoute = quote?.previewRoute || searchResult?.previewRoute || quote?.route || searchResult?.route;
   const packages = activeRoute?.fares[journey.vehicle]?.hourlyPackages || [];
+  const indicativeFare = quote?.fare || availableOptions.find(option => option.id === journey.vehicle)?.fare || (searchResult?.journey.vehicle === journey.vehicle ? searchResult.fare : undefined);
   return (
     <div className="cab-live cb-booking cb-planner" data-booking-step={step}>
       <div className="cb-container">
@@ -319,33 +323,16 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
               <Car size={17} /> SUKHADH HOLIDAYS / CAB JOURNEYS
             </p>
             <h1 ref={heading} tabIndex={-1}>
-              Your journey, <em>beautifully planned.</em>
+              Your journey, <em>planned with care.</em>
             </h1>
             <p>
-              Choose your route. Find your ride. Leave the rest to our team.
+              Plan your route, explore an estimate and request a quotation from our team.
             </p>
           </div>
           <Link href="/cabs/track" className="cb-btn cb-existing-booking">Access an existing booking</Link>
         </header>
-        <p className="cb-callout" role="status">
-          {catalogue?.persistent ? (
-            <>
-              <ShieldCheck size={18} aria-hidden="true" /><span><strong>Your request comes first.</strong> Our team confirms the final fare and vehicle availability. No payment collected now.</span>
-            </>
-          ) : catalogue ? (
-            <>
-              <strong>Development booking preview.</strong> Routes, vehicles
-              and prices may be mock data. Requests are held in temporary
-              memory and reset when the server restarts. No live payment is
-              collected.
-            </>
-          ) : (
-            <>
-              <strong>Cab booking is not ready.</strong> Please retry loading
-              the cab configuration before sending a request.
-            </>
-          )}
-        </p>
+        {!catalogue && !catalogueError && <p className="cb-loading" role="status">Preparing your journey planner...</p>}
+        {catalogue && !catalogue.persistent && <p className="cb-callout" role="status">Development preview - requests use temporary test storage.</p>}
         {catalogueError && (
           <div className="cb-alert" role="alert">
             {catalogueError}{" "}
@@ -358,26 +345,7 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
             </button>
           </div>
         )}
-        <ol className="cb-steps" aria-label="Booking progress">
-          {["Journey", "Vehicle", "Fare", "Passengers", "Payment plan", "Review", "Confirmation"].map(
-            (label, i) => (
-              <li
-                key={label}
-                className={i <= currentStep ? "active" : ""}
-                aria-current={i === currentStep ? "step" : undefined}
-              >
-                <span>
-                  {i < currentStep ? (
-                    <Check size={14} />
-                  ) : (
-                    String(i + 1).padStart(2, "0")
-                  )}
-                </span>
-                <span className="cb-step-label">{label}</span>
-              </li>
-            ),
-          )}
-        </ol>
+        {step !== "journey" && <nav className="cb-progress" aria-label="Quotation request progress"><button type="button" onClick={() => go("journey")}>Your journey</button><span>/</span><span aria-current="step">{step === "ride" ? "Vehicle preference" : step === "review" ? "Review request" : "Your details"}</span></nav>}
         {error && (
           <div className="cb-alert" role="alert">
             {error}
@@ -386,286 +354,39 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
         <div className="cb-layout">
           <section className="cb-main-card">
             {step === "journey" && (
-              <form id="cab-journey-form" aria-busy={busy}
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  void searchJourney();
-                }}
-              >
-                <div className="cb-section-top">
-                  <p className="cb-eyebrow">THE JOURNEY</p>
-                  <h2>Where would you like to go?</h2>
-                </div>
+              <form id="cab-journey-form" aria-busy={busy} onSubmit={e => { e.preventDefault(); void searchJourney(); }}>
+                <div className="cb-section-top"><p className="cb-eyebrow">PLAN YOUR CAB JOURNEY</p><h2>Where are we taking you?</h2></div>
                 <div className="cb-tabs" role="group" aria-label="Trip type">
-                  {(catalogue?.enabledTripTypes || []).map((type) => {
+                  {(catalogue?.enabledTripTypes || []).map(type => {
                     const ModeIcon = journeyModes[type].icon;
-                    return (
-                    <button
-                      type="button"
-                      aria-label={tripLabels[type]}
-                      aria-pressed={journey.tripType === type}
-                      className={journey.tripType === type ? "selected" : ""}
-                      key={type}
-                      onClick={() => trip(type)}
-                    >
-                      <ModeIcon size={18} aria-hidden="true" />
-                      <span>{tripLabels[type]}<small>{journeyModes[type].hint}</small></span>
-                      {journey.tripType === type && <Check size={14} className="cb-mode-check" aria-hidden="true" />}
-                    </button>
-                  );})}
+                    return <button type="button" aria-label={tripLabels[type]} aria-pressed={journey.tripType === type} className={journey.tripType === type ? "selected" : ""} key={type} onClick={() => { setPendingLocations({origin:false,destination:false}); trip(type); }}><ModeIcon size={15} aria-hidden="true"/><span>{tripLabels[type]}</span></button>;
+                  })}
                 </div>
-                {!catalogue && !catalogueError && (
-                  <p role="status">Loading configured trips…</p>
-                )}
-                {catalogue && (
-                  <label>
-                    <span>Choose a listed route <small>(optional)</small></span>
-                    <select
-                      aria-label="Configured route"
-                      value={journey.routeId || ""}
-                      onChange={(e) => {
-                        const r = catalogue.routes.find(
-                          (r) => r.id === e.target.value,
-                        );
-                        if (r) {
-                          journeyRevision.current++;
-                          previewRequest.current = undefined;
-                          setJourney((j) => ({
-                            ...j,
-                            routeId: r.id,
-                            origin: r.origin,
-                            destination: r.destination,
-                            vehicle: r.categories[0],
-                            packageId:
-                              r.fares[r.categories[0]]?.hourlyPackages[0]?.id,
-                          }));
-                          setSearchResult(undefined);
-                          setQuote(undefined);
-                        } else change({ routeId: "" });
-                      }}
-                    >
-                      <option value="">
-                        Plan with your own locations
-                      </option>
-                      {catalogue.routes
-                        .filter((r) => r.tripTypes.includes(journey.tripType))
-                        .map((r) => (
-                          <option key={r.id} value={r.id}>
-                            {r.name}
-                            {r.development ? " · DEMO" : ""}
-                          </option>
-                        ))}
-                    </select>
-                  </label>
-                )}
-                {airport && (
-                  <fieldset className="cb-airport-direction">
-                    <legend>Airport service</legend>
-                    {(["pickup", "drop"] as const).map((direction) => (
-                      <label key={direction}>
-                        <input
-                          type="radio"
-                          name="airport-direction"
-                          checked={journey.airportDirection === direction}
-                          onChange={() => {
-                            if (journey.airportDirection !== direction)
-                              change({
-                                airportDirection: direction,
-                                origin: journey.destination,
-                                destination: journey.origin,
-                                pickupAddress: journey.dropAddress,
-                                dropAddress: journey.pickupAddress,
-                              });
-                          }}
-                        />
-                        {direction === "pickup"
-                          ? "Pickup from airport"
-                          : "Drop at airport"}
-                      </label>
-                    ))}
-                  </fieldset>
-                )}
-                {journey.tripType === "multi-day" && journey.itinerary && <MultiDayItinerary value={journey.itinerary} onChange={itinerary=>change({itinerary})}/>}
+                {airport && <fieldset className="cb-airport-direction"><legend>Airport transfer</legend>{(["pickup", "drop"] as const).map(direction => <label key={direction}><input type="radio" checked={journey.airportDirection === direction} onChange={() => { const airportPlace = cabPlaces.find(p => p.airport)!; change({airportDirection:direction,origin:direction === "pickup" ? airportPlace : cabPlaces.find(p=>!p.airport)!,destination:direction === "drop" ? airportPlace : cabPlaces.find(p=>!p.airport)!,pickupAddress:"",dropAddress:""}); setPendingLocations({origin:false,destination:false}); }}/>{direction === "pickup" ? "From airport" : "To airport"}</label>)}</fieldset>}
                 <div className="cb-location-grid">
-                  <PlacePicker
-                    label={
-                      airport && journey.airportDirection === "pickup"
-                        ? "Pickup airport"
-                        : "Pickup city / location"
-                    }
-                    value={journey.origin}
-                    proximity={selectedLocation}
-                    airport={airport && journey.airportDirection === "pickup"}
-                    onChange={(p) => { setSelectedLocation(p); change({ origin: p }); }}
-                  />
-                  {!airport && (
-                    <button
-                      className="cb-swap"
-                      type="button"
-                      aria-label="Swap pickup and drop"
-                      onClick={() =>
-                        change({
-                          origin: journey.destination,
-                          destination: journey.origin,
-                          pickupAddress: journey.dropAddress,
-                          dropAddress: journey.pickupAddress,
-                        })
-                      }
-                    >
-                      <ArrowDownUp size={18} />
-                    </button>
-                  )}
-                  <PlacePicker
-                    label={
-                      airport && journey.airportDirection === "drop"
-                        ? "Drop airport"
-                        : "Drop city / location"
-                    }
-                    value={journey.destination}
-                    proximity={selectedLocation}
-                    airport={airport && journey.airportDirection === "drop"}
-                    onChange={(p) => { setSelectedLocation(p); change({ destination: p }); }}
-                  />
+                  <PlacePicker key={"origin-" + journey.tripType + journey.airportDirection + journey.routeId + journey.origin.id} label="Pickup location" value={journey.origin} proximity={selectedLocation} airport={airport && journey.airportDirection === "pickup"} onPendingChange={pending => setPendingLocations(p=>({...p,origin:pending}))} onChange={place => {setSelectedLocation(place);change({origin:place,pickupAddress:""});}}/>
+                  {!airport && <button type="button" className="cb-swap" aria-label="Swap pickup and drop" disabled={pendingLocations.origin || pendingLocations.destination} onClick={() => change({origin:journey.destination,destination:journey.origin,pickupAddress:journey.dropAddress,dropAddress:journey.pickupAddress})}><ArrowDownUp size={17}/></button>}
+                  <PlacePicker key={"destination-" + journey.tripType + journey.airportDirection + journey.routeId + journey.destination.id} label="Drop-off location" value={journey.destination} proximity={selectedLocation} airport={airport && journey.airportDirection === "drop"} onPendingChange={pending => setPendingLocations(p=>({...p,destination:pending}))} onChange={place => {setSelectedLocation(place);change({destination:place,dropAddress:""});}}/>
                 </div>
-                <div className="cb-fields">
-                  {journey.tripType === "local" && (
-                    <label>
-                      <span>Hourly package</span>
-                      <select
-                        required
-                        value={journey.packageId || ""}
-                        onChange={(e) => change({ packageId: e.target.value })}
-                      >
-                        <option value="">
-                          Select a package on a configured route
-                        </option>
-                        {packages.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name} · {p.hours} hours / {p.includedKm} km
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  )}
-                  <label>
-                    <span>Exact pickup address / terminal</span>
-                    <input
-                      required
-                      minLength={5}
-                      maxLength={400}
-                      value={journey.pickupAddress}
-                      onChange={(e) =>
-                        change({ pickupAddress: e.target.value })
-                      }
-                      placeholder="Hotel, street address or airport terminal"
-                    />
-                  </label>
-                  <label>
-                    <span>Exact drop address / terminal</span>
-                    <input
-                      required
-                      minLength={5}
-                      maxLength={400}
-                      value={journey.dropAddress}
-                      onChange={(e) => change({ dropAddress: e.target.value })}
-                      placeholder="Hotel, street address or airport terminal"
-                    />
-                  </label>
-                  <label>
-                    <span>Pickup date & time · IST</span>
-                    <input
-                      required
-                      type="datetime-local"
-                      value={journey.departure}
-                      onChange={(e) => change({ departure: e.target.value })}
-                    />
-                  </label>
-                  {["round-trip","multi-day"].includes(journey.tripType) && (
-                    <label>
-                      <span>Return arrival date & time · IST</span>
-                      <input
-                        required
-                        type="datetime-local"
-                        min={journey.departure}
-                        value={journey.returnAt}
-                        onChange={(e) => change({ returnAt: e.target.value })}
-                      />
-                    </label>
-                  )}
-                  <label>
-                    <span>Passengers</span>
-                    <select
-                      value={journey.passengers}
-                      onChange={(e) =>
-                        change({ passengers: Number(e.target.value) })
-                      }
-                    >
-                      {Array.from(
-                        {
-                          length: Math.max(
-                            1,
-                            ...(catalogue?.vehicles.map((v) => v.seats) || [
-                              12,
-                            ]),
-                          ),
-                        },
-                        (_, i) => (
-                          <option key={i} value={i + 1}>
-                            {i + 1} {i === 0 ? "passenger" : "passengers"}
-                          </option>
-                        ),
-                      )}
-                    </select>
-                  </label>
-                  <label><span>Luggage or return/arrival instructions (optional)</span><input maxLength={200} value={journey.luggage||""} onChange={e=>change({luggage:e.target.value})}/></label>
-                  {airport && (
-                    <label>
-                      <span>
-                        Flight number <small>(optional)</small>
-                      </span>
-                      <input
-                        maxLength={20}
-                        value={journey.flightNumber}
-                        onChange={(e) =>
-                          change({ flightNumber: e.target.value })
-                        }
-                        placeholder="For example, 6E 123"
-                      />
-                    </label>
-                  )}
+                <div className="cb-fields cb-travel-fields">
+                  <label><span>Pickup date & time - IST</span><input required type="datetime-local" value={journey.departure} onChange={e=>change({departure:e.target.value})}/></label>
+                  <label><span>Passengers</span><select value={journey.passengers} onChange={e=>change({passengers:Number(e.target.value)})}>{Array.from({length:Math.max(1,...(catalogue?.vehicles.map(v=>v.seats)||[12]))},(_,i)=><option key={i} value={i+1}>{i+1} {i===0?"passenger":"passengers"}</option>)}</select></label>
+                  {["round-trip","multi-day"].includes(journey.tripType) && <label className="cb-full"><span>Return arrival date & time - IST</span><input required type="datetime-local" min={journey.departure} value={journey.returnAt} onChange={e=>change({returnAt:e.target.value})}/></label>}
                 </div>
-                <p className="cb-note">
-                  Choose a pickup at least 15 minutes ahead. All booking times
-                  use India Standard Time. Flight details help coordination;
-                  automatic flight tracking is not included.
-                </p>
-                {Object.entries(fieldErrors).map(([field, message]) => (
-                  <p key={field} className="cb-inline-error" role="alert">
-                    {field}: {message}
-                  </p>
-                ))}
-                <p className="cb-note">
-                  Planning somewhere else? Choose your locations for a
-                  personal quote, or{" "}
-                  <Link href="/custom-routes">plan a custom journey</Link>.
-                </p>
-                <div className="cb-actions cb-journey-actions">
-                <button type="button" className="cb-btn" disabled={busy || !catalogue} onClick={() => void searchJourney(true)}>
-                  <Route size={17} aria-hidden="true" />{busy ? "Checking journey…" : "Preview route"}
-                </button>
-                <button
-                  className="cb-btn cb-primary"
-                  type="submit"
-                  disabled={
-                    busy ||
-                    !catalogue ||
-                    !catalogue.enabledTripTypes.includes(journey.tripType)
-                  }
-                >
-                  {busy ? "Checking configured rides…" : "Choose your ride"}{" "}
-                  <ArrowRight size={17} />
-                </button>
-                </div>
+                {journey.tripType === "multi-day" && journey.itinerary && <MultiDayItinerary value={journey.itinerary} onChange={itinerary=>change({itinerary})}/>}
+                {catalogue && <details className="cb-route-shortcut" open={journey.tripType === "local" ? true : undefined}><summary>{journey.tripType === "local" ? "Choose an hourly route & package" : "Choose a listed route"}</summary><label><span>Route shortcut</span><select aria-label="Configured route" value={journey.routeId||""} onChange={e=>{const r=catalogue.routes.find(r=>r.id===e.target.value);if(r){change({origin:r.origin,destination:r.destination,vehicle:r.categories[0],packageId:r.fares[r.categories[0]]?.hourlyPackages[0]?.id,pickupAddress:"",dropAddress:""});setJourney(j=>({...j,routeId:r.id}));setPendingLocations({origin:false,destination:false});}else change({routeId:""});}}><option value="">Plan with your own locations</option>{catalogue.routes.filter(r=>r.tripTypes.includes(journey.tripType)).map(r=><option key={r.id} value={r.id}>{r.name}</option>)}</select></label>
+                  {journey.tripType === "local" && <label><span>Hourly package</span><select required value={journey.packageId||""} onChange={e=>change({packageId:e.target.value})}><option value="">Select an hourly package</option>{packages.map(p=><option key={p.id} value={p.id}>{p.name} - {p.hours} hours / {p.includedKm} km</option>)}</select></label>}
+                </details>}
+                <details className="cb-optional-details"><summary>Add trip details <span>Optional</span></summary><div className="cb-fields">
+                  <label><span>Exact pickup address / entrance</span><input maxLength={400} value={journey.pickupAddress} onChange={e=>change({pickupAddress:e.target.value})} placeholder="Building, gate or terminal"/></label>
+                  <label><span>Exact drop-off address / entrance</span><input maxLength={400} value={journey.dropAddress} onChange={e=>change({dropAddress:e.target.value})} placeholder="Building, gate or terminal"/></label>
+                  <label className="cb-full"><span>Luggage or special instructions</span><input maxLength={200} value={journey.luggage||""} onChange={e=>change({luggage:e.target.value})} placeholder="Anything that helps us plan your journey"/></label>
+                  {airport && <label><span>Flight number</span><input maxLength={20} value={journey.flightNumber||""} onChange={e=>change({flightNumber:e.target.value})} placeholder="For example, 6E 123"/></label>}
+                  {journey.tripType === "custom" && <p className="cb-note cb-full">For additional stops, add the locations in special instructions. Our team will include them in your quotation; the preview shows pickup to drop-off only.</p>}
+                </div></details>
+                {Object.entries(fieldErrors).map(([field,message])=><p key={field} className="cb-inline-error" role="alert">{message}</p>)}
+                <div className="cb-actions cb-journey-actions"><button type="button" className="cb-btn cb-preview-button" disabled={busy||!catalogue} onClick={()=>{setMapOpen(true);void searchJourney(true);}}><Route size={17}/>{busy?"Checking route...":"Preview route"}</button><button className="cb-btn cb-primary" disabled={busy||!catalogue||!catalogue.enabledTripTypes.includes(journey.tripType)}>{busy?"Checking journey...":"Explore vehicles & fares"}</button></div>
+                <p className="cb-request-note"><ShieldCheck size={15}/> No commitment or payment. Final quote reviewed by our team.</p>
               </form>
             )}
             {step === "ride" && (
@@ -676,8 +397,8 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
                 }}
               >
                 <div className="cb-section-top">
-                  <p className="cb-eyebrow">02 / YOUR RIDE</p>
-                  <h2>A little comfort goes a long way.</h2>
+                  <p className="cb-eyebrow">YOUR VEHICLE PREFERENCE</p>
+                  <h2>Travel your way.</h2>
                   <p>
                     Choose a vehicle category. Your team will confirm the
                     specific vehicle and luggage space.
@@ -771,24 +492,23 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
                       )
                     }
                   >
-                    {busy ? "Checking your route…" : "Get fare & continue"}
-                    <ArrowRight size={17} />
+                    {busy ? "Checking your route…" : "Continue with this vehicle"}
+
                   </button>
                 </div>
               </form>
             )}
-            {step === "fare" && quote && <section><div className="cb-section-top"><p className="cb-eyebrow">03 / FARE REVIEW</p><h2>A clear view of your fare.</h2><p>{journey.origin.label} → {journey.destination.label} · {journey.passengers} passengers</p></div><FareDetails fare={quote.fare}/>{quote.routingWarning && <p className="cb-callout">{quote.routingWarning}</p>}<p className="cb-note">This estimate comes from the server. Operations must issue the final quote, obtain your acceptance and confirm availability before payment. Additional stops are requests until explicitly included in the final quote.</p><div className="cb-actions"><button type="button" className="cb-btn" onClick={() => go("ride")}>Change vehicle</button><button type="button" className="cb-btn cb-primary" onClick={() => go("passenger")}>Continue to passenger details <ArrowRight size={17}/></button></div></section>}
             {step === "passenger" && quote && (
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
                   const validation=customerSchema.safeParse(customer);
                   if(!validation.success){setFieldErrors(Object.fromEntries(validation.error.issues.map(issue=>[String(issue.path[0]),issue.message])));setError("Please check the passenger details.");return;}
-                  setFieldErrors({});go("payment");
+                  setFieldErrors({});go("review");
                 }}
               >
                 <div className="cb-section-top">
-                  <p className="cb-eyebrow">04 / PASSENGER DETAILS</p>
+                  <p className="cb-eyebrow">YOUR CONTACT DETAILS</p>
                   <h2>Let’s make a plan.</h2>
                   <p>
                     {catalogue?.persistent
@@ -877,14 +597,13 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
                     className="cb-btn cb-primary"
                     disabled={busy}
                   >
-                    Continue to payment arrangement
-                    <ArrowRight size={17} />
+                    Review quote request
+
                   </button>
                 </div>
               </form>
             )}
-            {step === "payment" && quote && <section><div className="cb-section-top"><p className="cb-eyebrow">05 / PAYMENT ARRANGEMENT</p><h2>Confirm first. Pay with clarity.</h2><p>No payment is collected when you send this request.</p></div><div className="cb-payment-plan"><ShieldCheck size={28}/><div><h3>Payment after admin confirmation</h3><p>The team will confirm your fare and vehicle availability. Any enabled full-payment, advance or pay-later options will then appear on your private booking page.</p><p>Your payment options and amount are determined by the confirmed booking policy.</p></div></div><div className="cb-actions"><button type="button" className="cb-btn" onClick={()=>go("passenger")}>Back to passengers</button><button type="button" className="cb-btn cb-primary" onClick={()=>go("review")}>Review your request <ArrowRight size={17}/></button></div></section>}
-            {step === "review" && quote && <section><div className="cb-section-top"><p className="cb-eyebrow">06 / FINAL REVIEW</p><h2>Everything in place?</h2><p>Check your journey before sending it to our cab team. A request is not a confirmed booking.</p></div>
+            {step === "review" && quote && <section><div className="cb-section-top"><p className="cb-eyebrow">REVIEW YOUR REQUEST</p><h2>Everything in place?</h2><p>Check your journey before sending it to our cab team. A request is not a confirmed booking.</p></div>
                 <dl className="cb-details">
                   <div>
                     <dt>Trip</dt>
@@ -955,7 +674,7 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
                   </span>
                 </p>
 
-                <div className="cb-actions"><button type="button" className="cb-btn" disabled={busy} onClick={()=>go("journey")}>Edit journey</button><button type="button" className="cb-btn" disabled={busy} onClick={()=>go("passenger")}>Edit passenger details</button><button type="button" className="cb-btn cb-primary" disabled={busy||!consent||!privacyConsent} onClick={()=>void submit()}>{busy?"Saving your request...":"Send booking request"}<ArrowRight size={17}/></button></div>
+                <div className="cb-actions"><button type="button" className="cb-btn" disabled={busy} onClick={()=>go("journey")}>Edit journey</button><button type="button" className="cb-btn" disabled={busy} onClick={()=>go("passenger")}>Edit passenger details</button><button type="button" className="cb-btn cb-primary" disabled={busy||!consent||!privacyConsent} onClick={()=>void submit()}>{busy?"Saving your request...":"Request a quote"}</button></div>
             </section>}
           </section>
           <aside className="cb-aside" aria-label="Your trip summary">
@@ -963,7 +682,8 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
               <p className="cb-eyebrow">YOUR JOURNEY AT A GLANCE</p>
               <span>{tripLabels[journey.tripType]}</span>
             </div>
-            <CabMap
+            <button type="button" className="cb-map-toggle" aria-expanded={mapOpen} aria-controls="cab-map-panel" onClick={()=>setMapOpen(open=>!open)}><MapPin size={17}/>{mapOpen ? "Hide journey map" : "View map & adjust pins"}</button>
+            <div id="cab-map-panel" className={mapOpen ? "cb-map-panel is-open" : "cb-map-panel"}><CabMap
               origin={journey.origin}
               destination={journey.destination}
               route={visualRoute}
@@ -977,8 +697,9 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
                 setSelectedLocation(place); change({ [target]: place });
               } : undefined}
             />
+            </div>
             <div className="cb-preview-status" role="status" aria-live="polite">
-              {busy ? "Checking your journey. Road routing may take a moment…" : quote?.previewWarning || searchResult?.previewWarning ? "Some road segments could not be verified. Our team will check the complete route." : visualRoute?.source === "demo" ? "Development route fixture; no live road route is shown." : visualRoute?.geometry.length ? "Road route shown for your selected map locations." : searchResult || quote ? "The road preview is unavailable. Our team will verify the route with your quote." : "Your selected locations are on the map. Add your addresses and travel dates, then preview the road route."}
+              {busy ? "Checking your journey. Road routing may take a moment…" : quote?.previewWarning || searchResult?.previewWarning ? "Some road segments could not be verified. Our team will check the complete route." : visualRoute?.source === "demo" ? "Development route fixture; no live road route is shown." : visualRoute?.geometry.length ? "Road route shown for your selected map locations." : searchResult || quote ? "The road preview is unavailable. Our team will verify the route with your quote." : "Your selected locations are on the map. Add your travel date, then preview the road route."}
             </div>
             {(quote?.previewWarning || searchResult?.previewWarning) && <p className="cb-note" role="status">{quote?.previewWarning || searchResult?.previewWarning}</p>}
             <div className="cb-route-info">
@@ -993,7 +714,7 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
               </p>
               {visualRoute && visualRoute.source !== "demo" && (
                 <div className="cb-route-stats">
-                  <span>{visualRoute.distanceKm} km outward</span>
+                  <span>{visualRoute.distanceKm} km{quote?.previewWarning || searchResult?.previewWarning ? " verified segments" : journey.tripType === "multi-day" ? " itinerary" : " outward"}</span>
                   <span>
                     <Clock3 size={14} />
                     {Math.floor(visualRoute.durationMinutes / 60)}h{" "}
@@ -1010,7 +731,7 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
                 <div><dt>Your group</dt><dd>{journey.passengers} {journey.passengers === 1 ? "passenger" : "passengers"}</dd></div>
                 {journey.luggage && <div><dt>Luggage / instructions</dt><dd>{journey.luggage}</dd></div>}
                 {quote && <div><dt>Vehicle preference</dt><dd>{availableOptions.find(option => option.id === journey.vehicle)?.name || journey.vehicle}</dd></div>}
-                {quote && <div><dt>{quote.fare.total === null ? "Fare status" : "Estimated fare"}</dt><dd>{quote.fare.total === null ? "Quote required" : cabMoney(quote.fare.total)}</dd></div>}
+
               </dl>
               <p className="cb-note">
                 Route estimates use your selected map points. Your final quote
@@ -1018,17 +739,19 @@ export function CabBookingFlow({prefill={}}:{prefill?:Record<string,string>}={})
                 stops can affect the journey.
               </p>
             </div>
+            {indicativeFare && <div className="cb-price-preview"><span>Indicative fare</span><strong>{indicativeFare.total === null ? "Prepared for your journey" : cabMoney(indicativeFare.total)}</strong><p>{indicativeFare.total === null ? "Our team will calculate your quotation after reviewing the route." : "Estimate only. Our team confirms the final quotation."}</p></div>}
             <details className="cb-next">
               <summary>What happens after your request?</summary>
               <ol>
                 <li>Send your journey request</li>
                 <li>Review and accept your final quote</li>
                 <li>Receive confirmation and driver details</li>
-                <li>Choose an enabled payment arrangement</li>
+                <li>Trip tracking becomes available after the trip officially starts</li>
               </ol>
             </details>
           </aside>
         </div>
+        <div className="cb-trust-strip"><div><ShieldCheck size={20}/><span><strong>Reviewed by real people</strong>Your quotation is prepared by our travel team.</span></div><div><Car size={20}/><span><strong>Planned, then confirmed</strong>Driver and vehicle assigned through our booking process.</span></div><div><MapPin size={20}/><span><strong>Support for your journey</strong><Link href="/contact">Contact Sukhad Holidays</Link> - Tracking after trip start.</span></div></div>
         <p className="cb-footer-note">
           Your journey. A team that cares. Sukhad Holidays.
           {" "}<Link href="/cabs/track" className="cb-text-link">Access an existing booking</Link>

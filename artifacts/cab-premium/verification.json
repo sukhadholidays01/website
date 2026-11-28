@@ -1,0 +1,39 @@
+{
+  "stage": "local",
+  "liveRoute": {
+    "source": "mapbox",
+    "distanceKm": 222.47,
+    "durationMinutes": 290,
+    "geometryPoints": 37
+  },
+  "checks": [
+    "Planner, map, selected state and no overflow at 1440",
+    "Planner, map, selected state and no overflow at 1024",
+    "Planner, map, selected state and no overflow at 820",
+    "Planner, map, selected state and no overflow at 390",
+    "Planner, map, selected state and no overflow at 360",
+    "route-preview: tablet/mobile layout without overflow",
+    "vehicles: tablet/mobile layout without overflow",
+    "review: tablet/mobile layout without overflow",
+    "one-way: validation, preview, vehicles, server fare, contact, review, consents, unchanged payload, idempotent domain submission, pending reference and retrieval UI",
+    "round-trip: validation, preview, vehicles, server fare, contact, review, consents, unchanged payload, idempotent domain submission, pending reference and retrieval UI",
+    "airport: validation, preview, vehicles, server fare, contact, review, consents, unchanged payload, idempotent domain submission, pending reference and retrieval UI",
+    "custom: validation, preview, vehicles, server fare, contact, review, consents, unchanged payload, idempotent domain submission, pending reference and retrieval UI",
+    "multi-day: validation, preview, vehicles, server fare, contact, review, consents, unchanged payload, idempotent domain submission, pending reference and retrieval UI",
+    "local: validation, preview, vehicles, server fare, contact, review, consents, unchanged payload, idempotent domain submission, pending reference and retrieval UI"
+  ],
+  "runtimeErrors": [],
+  "consoleErrors": [],
+  "mapTiles": 0,
+  "pinConfirmations": 0,
+  "submittedModes": [
+    "one-way",
+    "round-trip",
+    "airport",
+    "custom",
+    "multi-day",
+    "local"
+  ],
+  "isolation": "One actual configured Mapbox road route; booking/domain services in memory, API/auth/persistence fixtures. No real database, geocoder, email or payments.",
+  "passed": true
+}

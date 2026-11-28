@@ -1,0 +1,5 @@
+.cb-journey-marker { background:none; border:0; }
+.cb-journey-marker span { display:grid; place-items:center; width:32px; height:32px; background:#087f8c; color:#fff; border:3px solid #fff; border-radius:50% 50% 50% 4px; box-shadow:0 2px 7px #15364b60; font:700 14px system-ui; }
+.cb-journey-marker.is-drop span { background:#15364b; border-radius:6px; }
+.cb-marker-label { background:white; border:0; border-radius:4px; color:#17364a; font-weight:600; box-shadow:0 1px 5px #15364b20; }
+.cb-marker-label { max-width:190px; overflow:hidden; text-overflow:ellipsis; }

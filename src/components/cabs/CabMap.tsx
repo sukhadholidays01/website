@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { CabPlace, CabRoute } from "@/lib/cab/types";
 import "leaflet/dist/leaflet.css";
+import "./cab-map.css";
 export function CabMap({
   origin,
   destination,
@@ -93,24 +94,9 @@ export function CabMap({
         pickupLabel.textContent = "Pickup: " + origin.label;
         const dropLabel = document.createElement("span");
         dropLabel.textContent = "Drop: " + destination.label;
-        L.circleMarker(start, {
-          radius: 8,
-          color: "#fff",
-          weight: 3,
-          fillColor: "#087f8c",
-          fillOpacity: 1,
-        })
-          .addTo(map)
-          .bindTooltip(pickupLabel);
-        L.circleMarker(end, {
-          radius: 8,
-          color: "#fff",
-          weight: 3,
-          fillColor: "#e68a37",
-          fillOpacity: 1,
-        })
-          .addTo(map)
-          .bindTooltip(dropLabel);
+        const journeyIcon = (drop: boolean) => L.divIcon({ className: "cb-journey-marker" + (drop ? " is-drop" : ""), html: '<span>' + (drop ? 'B' : 'A') + '</span>', iconSize: [32, 32], iconAnchor: [16, 16] });
+        L.marker(start, { icon: journeyIcon(false), title: "A - Pickup: " + origin.label, alt: "Pickup location" }).addTo(map).bindTooltip(pickupLabel, { permanent: true, direction: "top", offset: [0, -18], className: "cb-marker-label" });
+        L.marker(end, { icon: journeyIcon(true), title: "B - Drop-off: " + destination.label, alt: "Drop-off location" }).addTo(map).bindTooltip(dropLabel, { permanent: true, direction: "bottom", offset: [0, 18], className: "cb-marker-label" });
         stops.forEach((place, index) => {
           const label = document.createElement("span");
           label.textContent = `Stop ${index + 1}: ${place.label}`;
@@ -128,7 +114,7 @@ export function CabMap({
             maxZoom: 12,
             animate: false,
           });
-        if (focusPlace) map.setView([focusPlace.lat, focusPlace.lon], 16, { animate: false });
+        if (focusPlace && !route?.geometry.length) map.setView([focusPlace.lat, focusPlace.lon], 16, { animate: false });
         if (editing) {
           const place = editing === "origin" ? origin : destination;
           const marker = L.marker([place.lat, place.lon], { draggable: true, icon: L.divIcon({ className: "cb-confirm-pin", html: '<span aria-hidden="true">●</span>', iconSize: [36, 36], iconAnchor: [18, 18] }) }).addTo(map).bindTooltip("Drag to your entrance");
@@ -167,11 +153,11 @@ export function CabMap({
       />
       {error && <p role="status">{error}</p>}
       {onConfirmPin && <div className="cb-pin-controls">
-        <p className="cb-note">Confirm the exact entrance. A street or locality result may be approximate.</p>
+        <p className="cb-note">A: Pickup / B: Drop-off. Adjust the pins to your entrance if needed.</p>
         <div className="cb-actions">{(["origin", "destination"] as const).map(target => <button key={target} type="button" className="cb-btn" disabled={savingPin} onClick={() => { setError(""); setEditing(target); const place = target === "origin" ? origin : destination; moveDraft({ lat: place.lat, lon: place.lon }); }}>{target === "origin" ? "Adjust pickup pin" : "Adjust drop pin"}</button>)}</div>
         {editing && draft && <fieldset disabled={savingPin}><legend>{editing === "origin" ? "Pickup" : "Drop"}: {editing === "origin" ? origin.label : destination.label}</legend>
           <p className="cb-note">Drag the marker or tap the map at the entrance. The address label stays unchanged; the adjusted pin is your chosen point.</p>
-          <div className="cb-fields"><label>Pin latitude<input type="number" step="any" min="6" max="38" value={Number.isFinite(draft.lat) ? draft.lat : ""} onChange={event => moveDraft({ ...draft, lat: event.target.value === "" ? NaN : Number(event.target.value) })} /></label><label>Pin longitude<input type="number" step="any" min="68" max="98" value={Number.isFinite(draft.lon) ? draft.lon : ""} onChange={event => moveDraft({ ...draft, lon: event.target.value === "" ? NaN : Number(event.target.value) })} /></label></div>
+          <details><summary>Adjust coordinates manually</summary><div className="cb-fields"><label>Pin latitude<input type="number" step="any" min="6" max="38" value={Number.isFinite(draft.lat) ? draft.lat : ""} onChange={event => moveDraft({ ...draft, lat: event.target.value === "" ? NaN : Number(event.target.value) })} /></label><label>Pin longitude<input type="number" step="any" min="68" max="98" value={Number.isFinite(draft.lon) ? draft.lon : ""} onChange={event => moveDraft({ ...draft, lon: event.target.value === "" ? NaN : Number(event.target.value) })} /></label></div></details>
           <div className="cb-actions"><button type="button" className="cb-btn cb-primary" disabled={!validPin(draft)} onClick={async () => { setSavingPin(true); setError(""); try { await onConfirmPin(editing, draft); setEditing(null); } catch { setError("Could not confirm this pin. Retry or keep the selected location and enter your exact address."); } finally { setSavingPin(false); } }}>{savingPin ? "Confirming pin…" : "Confirm this pin"}</button><button type="button" className="cb-btn" onClick={() => setEditing(null)}>Cancel pin adjustment</button></div>
         </fieldset>}
       </div>}
